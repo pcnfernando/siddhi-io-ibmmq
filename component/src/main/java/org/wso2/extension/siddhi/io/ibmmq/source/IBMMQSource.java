@@ -156,7 +156,6 @@ public class IBMMQSource extends Source {
             ibmMessageConsumer.consume(ibmMessageConsumer, scheduledExecutorService);
 
         } catch (JMSException e) {
-            //calling super class logs the exception and retry
             throw new ConnectionUnavailableException("Exception in starting the IBM MQ receiver for stream: "
                     + sourceEventListener.getStreamDefinition().getId(), e);
         }

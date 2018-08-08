@@ -146,7 +146,7 @@ public class IBMMQSink extends Sink {
             connectionFactory.setHostName(optionHolder.validateAndGetOption(IBMMQConstants.HOST).getValue());
             connectionFactory.setChannel(optionHolder.validateAndGetOption(IBMMQConstants.CHANNEL).getValue());
         } catch (JMSException e) {
-            throw new IBMMQSinkAdaptorRuntimeException("Error while initializing IBM MQ source: " + e.getMessage(), e);
+            throw new IBMMQSinkAdaptorRuntimeException("Error while initializing IBM MQ sink: " + e.getMessage(), e);
         }
 
     }
@@ -214,14 +214,13 @@ public class IBMMQSink extends Sink {
                 consumer.close();
             }
         } catch (JMSException e) {
-            log.error("Error disconnecting the IBM MQ connection ", e);
+            log.error("Error while disconnecting the IBM MQ connection ", e);
         }
     }
 
     @Override
     public void destroy() {
-        //not implemented yet
-
+        // disconnect() gets called before destroy() which does the cleanup destroy() needs
     }
 
     @Override
@@ -231,6 +230,6 @@ public class IBMMQSink extends Sink {
 
     @Override
     public void restoreState(Map<String, Object> state) {
-        //not implemented yet
+        //not available
     }
 }

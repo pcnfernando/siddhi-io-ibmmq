@@ -83,10 +83,10 @@ public class IBMMessageConsumer implements Runnable {
                     return;
                 }
             } catch (JMSException e) {
-                throw new IBMMQInputAdaptorRuntimeException("Exception has occurred during message consuming " +
+                throw new IBMMQInputAdaptorRuntimeException("Exception has occurred during consuming messages " +
                         "from the queue: " + e.getMessage(), e);
             } catch (InterruptedException e) {
-                LOGGER.error("Error while pausing the message consuming: "
+                LOGGER.error("Error while pausing the consuming messages: "
                         + e.getMessage(), e);
                 Thread.currentThread().interrupt();
             }

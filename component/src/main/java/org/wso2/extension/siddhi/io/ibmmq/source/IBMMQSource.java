@@ -20,6 +20,7 @@ package org.wso2.extension.siddhi.io.ibmmq.source;
 
 import com.ibm.mq.jms.MQConnection;
 import com.ibm.mq.jms.MQQueueConnectionFactory;
+import com.ibm.msg.client.wmq.WMQConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.extension.siddhi.io.ibmmq.source.exception.IBMMQInputAdaptorRuntimeException;
@@ -118,23 +119,25 @@ public class IBMMQSource extends Source {
         this.sourceEventListener = sourceEventListener;
         this.optionHolder = optionHolder;
         connectionFactory = new MQQueueConnectionFactory();
-        if (!"null".equalsIgnoreCase(optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME, "null")) &&
-                !"null".equalsIgnoreCase(optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD, "null"))) {
-            isSecured = true;
-            userName = optionHolder.validateAndGetOption(IBMMQConstants.USER_NAME).getValue();
-            password = optionHolder.validateAndGetOption(IBMMQConstants.PASSWORD).getValue();
-        }
         try {
+
+            if (!"null".equalsIgnoreCase(optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME, "null")) &&
+                    !"null".equalsIgnoreCase(optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD, "null"))) {
+                isSecured = true;
+                userName = optionHolder.validateAndGetOption(IBMMQConstants.USER_NAME).getValue();
+                password = optionHolder.validateAndGetOption(IBMMQConstants.PASSWORD).getValue();
+            }
             connectionFactory.setChannel(optionHolder.validateAndGetOption(IBMMQConstants.CHANNEL).getValue());
             connectionFactory.setHostName(optionHolder.validateAndGetOption(IBMMQConstants.HOST).getValue());
             connectionFactory.setPort(Integer.parseInt(optionHolder.
                     validateAndGetOption(IBMMQConstants.PORT).getValue()));
             connectionFactory.setQueueManager(optionHolder.validateAndGetOption(IBMMQConstants.QUEUE_MANAGER_NAME)
                     .getValue());
-            connectionFactory.setTransportType(1);
+            connectionFactory.setTransportType(WMQConstants.WMQ_CM_CLIENT);
             scheduledExecutorService = siddhiAppContext.getScheduledExecutorService();
         } catch (JMSException e) {
-            throw new IBMMQInputAdaptorRuntimeException("Error while initializing IBM MQ source: " + e.getMessage(), e);
+            throw new IBMMQInputAdaptorRuntimeException("Error while initializing IBM MQ source: " + optionHolder.
+                    validateAndGetOption(IBMMQConstants.DESTINATION_NAME).getValue() + ", " + e.getMessage(), e);
         }
 
     }

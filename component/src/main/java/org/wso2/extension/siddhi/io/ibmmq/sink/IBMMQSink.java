@@ -20,6 +20,7 @@
 package org.wso2.extension.siddhi.io.ibmmq.sink;
 
 import com.ibm.mq.jms.MQQueueConnectionFactory;
+import com.ibm.msg.client.wmq.WMQConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.extension.siddhi.io.ibmmq.sink.exception.IBMMQSinkAdaptorRuntimeException;
@@ -140,13 +141,15 @@ public class IBMMQSink extends Sink {
         try {
             connectionFactory.setQueueManager(optionHolder.validateAndGetOption(IBMMQConstants.QUEUE_MANAGER_NAME).
                     getValue());
-            connectionFactory.setTransportType(1);
+            connectionFactory.setTransportType(WMQConstants.WMQ_CM_CLIENT);
             connectionFactory.setPort(Integer.parseInt(optionHolder.validateAndGetOption(IBMMQConstants.PORT)
                     .getValue()));
             connectionFactory.setHostName(optionHolder.validateAndGetOption(IBMMQConstants.HOST).getValue());
             connectionFactory.setChannel(optionHolder.validateAndGetOption(IBMMQConstants.CHANNEL).getValue());
         } catch (JMSException e) {
-            throw new IBMMQSinkAdaptorRuntimeException("Error while initializing IBM MQ sink: " + e.getMessage(), e);
+            throw new IBMMQSinkAdaptorRuntimeException("Error while initializing IBM MQ sink: " + optionHolder.
+                    validateAndGetOption(IBMMQConstants.DESTINATION_NAME).getValue() +
+                    ", " + e.getMessage(), e);
         }
 
     }

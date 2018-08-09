@@ -110,6 +110,4 @@ public class IBMMessageConsumer implements Runnable {
     void consume(IBMMessageConsumer consumer, ScheduledExecutorService scheduledExecutorService) {
         scheduledFuture = scheduledExecutorService.schedule(consumer, 0, TimeUnit.MILLISECONDS);
     }
-
-
 }

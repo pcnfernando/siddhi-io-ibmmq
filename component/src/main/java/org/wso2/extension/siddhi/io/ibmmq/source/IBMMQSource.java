@@ -171,7 +171,9 @@ public class IBMMQSource extends Source {
 
     @Override
     public void disconnect() {
+        String queueName = "";
         try {
+            queueName = queue.getQueueName();
             if (Objects.nonNull(connection)) {
                 connection.close();
                 ibmMessageConsumer.kill();
@@ -180,7 +182,7 @@ public class IBMMQSource extends Source {
                 consumer.close();
             }
         } catch (JMSException e) {
-            LOG.error("Error disconnecting the IBM MQ connection ", e);
+            LOG.error("Error disconnecting the IBM MQ connection for the queue: " + queueName + ". ", e);
         }
     }
 

@@ -115,6 +115,7 @@ public class IBMMQSink extends Sink {
     private MessageConsumer consumer;
     private String userName;
     private String password;
+    private String queueName;
     private boolean isSecured = false;
 
     @Override
@@ -132,6 +133,7 @@ public class IBMMQSink extends Sink {
             sinkConfigReader, SiddhiAppContext siddhiAppContext) {
         this.optionHolder = optionHolder;
         connectionFactory = new MQQueueConnectionFactory();
+        queueName = optionHolder.validateAndGetStaticValue(IBMMQConstants.DESTINATION_NAME);
         this.userName = optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME,
                 sinkConfigReader.readConfig(IBMMQConstants.USER_NAME, null));
         this.password = optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD,
@@ -159,7 +161,6 @@ public class IBMMQSink extends Sink {
     @Override
     public void publish(Object payload, DynamicOptions transportOptions) throws ConnectionUnavailableException {
         try {
-            messageSender = session.createSender(queue);
             if (payload instanceof String) {
                 Message message = session.createTextMessage(payload.toString());
                 messageSender.send(message);
@@ -201,19 +202,17 @@ public class IBMMQSink extends Sink {
             queue = session.createQueue(optionHolder.validateAndGetOption(IBMMQConstants.DESTINATION_NAME)
                     .getValue());
             consumer = session.createConsumer(queue);
+            messageSender = session.createSender(queue);
 
-
-        } catch (JMSException e) {
-            throw new ConnectionUnavailableException("Exception in starting the IBM MQ receiver for stream: "
-                    + outputStreamDefinition.getId(), e);
+        } catch (Exception e) {
+            throw new ConnectionUnavailableException("Exception in starting the IBM MQ receiver for queue: "
+                    + queueName, e);
         }
     }
 
     @Override
     public void disconnect() {
-        String queueName = "";
         try {
-            queueName = queue.getQueueName();
             if (Objects.nonNull(connection)) {
                 connection.close();
             }

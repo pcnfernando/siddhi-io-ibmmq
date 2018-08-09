@@ -109,6 +109,7 @@ public class IBMMQSource extends Source {
     private ScheduledExecutorService scheduledExecutorService;
     private String userName;
     private String password;
+    private String queueName;
     private boolean isSecured = false;
 
 
@@ -119,13 +120,14 @@ public class IBMMQSource extends Source {
         this.sourceEventListener = sourceEventListener;
         this.optionHolder = optionHolder;
         connectionFactory = new MQQueueConnectionFactory();
+        queueName = optionHolder.validateAndGetStaticValue(IBMMQConstants.DESTINATION_NAME);
         try {
-
-            if (!"null".equalsIgnoreCase(optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME, "null")) &&
-                    !"null".equalsIgnoreCase(optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD, "null"))) {
+            this.userName = optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME,
+                    configReader.readConfig(IBMMQConstants.USER_NAME, null));
+            this.password = optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD,
+                    configReader.readConfig(IBMMQConstants.PASSWORD, null));
+            if (Objects.nonNull(password) && Objects.nonNull(userName)) {
                 isSecured = true;
-                userName = optionHolder.validateAndGetOption(IBMMQConstants.USER_NAME).getValue();
-                password = optionHolder.validateAndGetOption(IBMMQConstants.PASSWORD).getValue();
             }
             connectionFactory.setChannel(optionHolder.validateAndGetOption(IBMMQConstants.CHANNEL).getValue());
             connectionFactory.setHostName(optionHolder.validateAndGetOption(IBMMQConstants.HOST).getValue());
@@ -171,9 +173,7 @@ public class IBMMQSource extends Source {
 
     @Override
     public void disconnect() {
-        String queueName = "";
         try {
-            queueName = queue.getQueueName();
             if (Objects.nonNull(connection)) {
                 connection.close();
                 ibmMessageConsumer.kill();

@@ -69,16 +69,17 @@ import javax.jms.Session;
                         description = "Name of the Queue Manager",
                         type = DataType.STRING),
                 @Parameter(name = IBMMQConstants.USER_NAME,
-                        description = "User name of the server",
+                        description = "User name of the server. If this is not provided, " +
+                                "will try to connect without both username and password",
                         type = DataType.STRING,
                         optional = true,
-                        defaultValue = "will try to connect without username"),
+                        defaultValue = "null"),
                 @Parameter(name = IBMMQConstants.PASSWORD,
-                        description = "Password of the server",
+                        description = "Password of the server. If this is not provided, will try to connect without " +
+                                "both username and password",
                         type = DataType.STRING,
                         optional = true,
-                        defaultValue = "will try to connect without username"),
-
+                        defaultValue = "null"),
         },
         examples = {
                 @Example(description = "This example shows how to connect to an IBM message queue and "

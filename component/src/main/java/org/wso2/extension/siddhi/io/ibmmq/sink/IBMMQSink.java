@@ -58,7 +58,7 @@ import javax.jms.Session;
 @Extension(
         name = "ibmmq",
         namespace = "sink",
-        description = "IBM MQ Sink allows users to subscribe to a IBM MQ broker and sent messages.",
+        description = "IBM MQ Sink allows users to subscribe to a IBM MQ broker and send messages.",
         parameters = {
                 @Parameter(name = IBMMQConstants.DESTINATION_NAME,
                         description = "Queue name which IBM MQ Source should subscribe to",
@@ -172,7 +172,7 @@ public class IBMMQSink extends Sink {
                     try {
                         mapMessage.setString((String) key, (String) value);
                     } catch (JMSException e) {
-                        throw new IBMMQSinkAdaptorRuntimeException("Exception has occurred while publishing payload: " +
+                        throw new IBMMQSinkAdaptorRuntimeException("Exception occurred while publishing payload: " +
                                 "key - '" + key + "', value - '" + value + "' from stream: '"
                                 + outputStreamDefinition.getId() + "'. ", e);
                     }
@@ -186,7 +186,7 @@ public class IBMMQSink extends Sink {
             }
             messageSender.close();
         } catch (JMSException e) {
-            throw new IBMMQSinkAdaptorRuntimeException("Exception has occurred while publishing payload: " +
+            throw new IBMMQSinkAdaptorRuntimeException("Exception occurred while publishing payload: " +
                     payload.toString() + " , ", e);
         }
     }

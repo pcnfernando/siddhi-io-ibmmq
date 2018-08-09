@@ -68,6 +68,7 @@
                 <groupId>org.wso2.extension.siddhi.map.xml</groupId>
                 <artifactId>siddhi-map-xml</artifactId>
                 <version>${xml.mapper.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>com.ibm.mq</groupId>

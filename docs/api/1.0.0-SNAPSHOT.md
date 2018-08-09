@@ -4,7 +4,7 @@
 
 ### ibmmq *<a target="_blank" href="https://wso2.github.io/siddhi/documentation/siddhi-4.0/#sink">(Sink)</a>*
 
-<p style="word-wrap: break-word">IBM MQ Sink allows users to subscribe to a IBM MQ broker and sent messages.</p>
+<p style="word-wrap: break-word">IBM MQ Sink allows users to subscribe to a IBM MQ broker and send messages.</p>
 
 <span id="syntax" class="md-typeset" style="display: block; font-weight: bold;">Syntax</span>
 ```
@@ -63,16 +63,16 @@
     </tr>
     <tr>
         <td style="vertical-align: top">username</td>
-        <td style="vertical-align: top; word-wrap: break-word">User name of the server</td>
-        <td style="vertical-align: top">will try to connect without username</td>
+        <td style="vertical-align: top; word-wrap: break-word">User name of the server. If this is not provided, will try to connect without both username and password</td>
+        <td style="vertical-align: top">null</td>
         <td style="vertical-align: top">STRING</td>
         <td style="vertical-align: top">Yes</td>
         <td style="vertical-align: top">No</td>
     </tr>
     <tr>
         <td style="vertical-align: top">password</td>
-        <td style="vertical-align: top; word-wrap: break-word">Password of the server</td>
-        <td style="vertical-align: top">will try to connect without username</td>
+        <td style="vertical-align: top; word-wrap: break-word">Password of the server. If this is not provided, will try to connect without both username and password</td>
+        <td style="vertical-align: top">null</td>
         <td style="vertical-align: top">STRING</td>
         <td style="vertical-align: top">Yes</td>
         <td style="vertical-align: top">No</td>
@@ -84,7 +84,7 @@
 ```
 @source(type='ibmmq',destination.name='Queue1',host='192.168.56.3',port='1414',channel='Channel1',queue.manager = 'ESBQManager',password='1920',username='mqm',@map(type='text'))define stream SweetProductionStream(name string, amount double);
 ```
-<p style="word-wrap: break-word">This example shows how to connect to an IBM MQ queue and receive messages.</p>
+<p style="word-wrap: break-word">This example shows how to connect to an IBM MQ queue and send messages.</p>
 
 ## Source
 
@@ -149,16 +149,16 @@
     </tr>
     <tr>
         <td style="vertical-align: top">username</td>
-        <td style="vertical-align: top; word-wrap: break-word">User name of the server</td>
-        <td style="vertical-align: top">will try to connect without username</td>
+        <td style="vertical-align: top; word-wrap: break-word">User name of the server. If this is not provided, will try to connect without both username and password</td>
+        <td style="vertical-align: top">null</td>
         <td style="vertical-align: top">STRING</td>
         <td style="vertical-align: top">Yes</td>
         <td style="vertical-align: top">No</td>
     </tr>
     <tr>
         <td style="vertical-align: top">password</td>
-        <td style="vertical-align: top; word-wrap: break-word">Password of the server</td>
-        <td style="vertical-align: top">will try to connect without username</td>
+        <td style="vertical-align: top; word-wrap: break-word">Password of the server. If this is not provided, will try to connect without both username and password</td>
+        <td style="vertical-align: top">null</td>
         <td style="vertical-align: top">STRING</td>
         <td style="vertical-align: top">Yes</td>
         <td style="vertical-align: top">No</td>

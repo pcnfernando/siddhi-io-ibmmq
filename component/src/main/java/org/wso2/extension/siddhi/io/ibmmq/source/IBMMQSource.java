@@ -23,7 +23,7 @@ import com.ibm.mq.jms.MQQueueConnectionFactory;
 import com.ibm.msg.client.wmq.WMQConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.extension.siddhi.io.ibmmq.source.exception.IBMMQInputAdaptorRuntimeException;
+import org.wso2.extension.siddhi.io.ibmmq.source.exception.IBMMQSourceAdaptorRuntimeException;
 import org.wso2.extension.siddhi.io.ibmmq.util.IBMMQConstants;
 import org.wso2.siddhi.annotation.Example;
 import org.wso2.siddhi.annotation.Extension;
@@ -111,6 +111,7 @@ public class IBMMQSource extends Source {
     private String userName;
     private String password;
     private String queueName;
+    private SiddhiAppContext siddhiAppContext;
     private boolean isSecured = false;
 
 
@@ -118,18 +119,20 @@ public class IBMMQSource extends Source {
     public void init(SourceEventListener sourceEventListener, OptionHolder optionHolder,
                      String[] requestedTransportPropertyNames, ConfigReader configReader,
                      SiddhiAppContext siddhiAppContext) {
+        this.siddhiAppContext = siddhiAppContext;
         this.sourceEventListener = sourceEventListener;
         this.optionHolder = optionHolder;
-        connectionFactory = new MQQueueConnectionFactory();
-        queueName = optionHolder.validateAndGetStaticValue(IBMMQConstants.DESTINATION_NAME);
+        this.connectionFactory = new MQQueueConnectionFactory();
+        this.queueName = optionHolder.validateAndGetStaticValue(IBMMQConstants.DESTINATION_NAME);
+        this.userName = optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME,
+                configReader.readConfig(IBMMQConstants.USER_NAME, null));
+        this.password = optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD,
+                configReader.readConfig(IBMMQConstants.PASSWORD, null));
+
+        if (Objects.nonNull(password) && Objects.nonNull(userName)) {
+            isSecured = true;
+        }
         try {
-            this.userName = optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME,
-                    configReader.readConfig(IBMMQConstants.USER_NAME, null));
-            this.password = optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD,
-                    configReader.readConfig(IBMMQConstants.PASSWORD, null));
-            if (Objects.nonNull(password) && Objects.nonNull(userName)) {
-                isSecured = true;
-            }
             connectionFactory.setChannel(optionHolder.validateAndGetOption(IBMMQConstants.CHANNEL).getValue());
             connectionFactory.setHostName(optionHolder.validateAndGetOption(IBMMQConstants.HOST).getValue());
             connectionFactory.setPort(Integer.parseInt(optionHolder.
@@ -139,7 +142,7 @@ public class IBMMQSource extends Source {
             connectionFactory.setTransportType(WMQConstants.WMQ_CM_CLIENT);
             scheduledExecutorService = siddhiAppContext.getScheduledExecutorService();
         } catch (JMSException e) {
-            throw new IBMMQInputAdaptorRuntimeException("Error while initializing IBM MQ source: " + optionHolder.
+            throw new IBMMQSourceAdaptorRuntimeException("Error while initializing IBM MQ source: " + optionHolder.
                     validateAndGetOption(IBMMQConstants.DESTINATION_NAME).getValue() + ", " + e.getMessage(), e);
         }
 
@@ -162,8 +165,8 @@ public class IBMMQSource extends Source {
             ibmMessageConsumer.consume(ibmMessageConsumer, scheduledExecutorService);
 
         } catch (JMSException e) {
-            throw new ConnectionUnavailableException("Exception in starting the IBM MQ receiver for stream: "
-                    + sourceEventListener.getStreamDefinition().getId(), e);
+            throw new ConnectionUnavailableException("Exception occurred while connecting to the IBM MQ for queue: '"
+                    + queueName + "' in siddhi app: '" + siddhiAppContext.getName() + "' . ", e);
         }
     }
 

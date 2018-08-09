@@ -21,7 +21,7 @@ package org.wso2.extension.siddhi.io.ibmmq.source;
 import com.ibm.mq.jms.MQConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.extension.siddhi.io.ibmmq.source.exception.IBMMQInputAdaptorRuntimeException;
+import org.wso2.extension.siddhi.io.ibmmq.source.exception.IBMMQSourceAdaptorRuntimeException;
 import org.wso2.siddhi.core.stream.input.source.SourceEventListener;
 
 import java.nio.ByteBuffer;
@@ -83,7 +83,7 @@ public class IBMMessageConsumer implements Runnable {
                     return;
                 }
             } catch (JMSException e) {
-                throw new IBMMQInputAdaptorRuntimeException("Exception occurred during consuming messages " +
+                throw new IBMMQSourceAdaptorRuntimeException("Exception occurred during consuming messages " +
                         "from the queue: " + e.getMessage(), e);
             } catch (InterruptedException e) {
                 LOGGER.error("Error while pausing the consuming messages: "

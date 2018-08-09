@@ -118,6 +118,7 @@ public class IBMMQSink extends Sink {
     private String password;
     private String queueName;
     private boolean isSecured = false;
+    private SiddhiAppContext siddhiAppContext;
 
     @Override
     public Class[] getSupportedInputEventClasses() {
@@ -132,9 +133,10 @@ public class IBMMQSink extends Sink {
     @Override
     protected void init(StreamDefinition outputStreamDefinition, OptionHolder optionHolder, ConfigReader
             sinkConfigReader, SiddhiAppContext siddhiAppContext) {
+        this.siddhiAppContext = siddhiAppContext;
         this.optionHolder = optionHolder;
-        connectionFactory = new MQQueueConnectionFactory();
-        queueName = optionHolder.validateAndGetStaticValue(IBMMQConstants.DESTINATION_NAME);
+        this.connectionFactory = new MQQueueConnectionFactory();
+        this.queueName = optionHolder.validateAndGetStaticValue(IBMMQConstants.DESTINATION_NAME);
         this.userName = optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME,
                 sinkConfigReader.readConfig(IBMMQConstants.USER_NAME, null));
         this.password = optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD,
@@ -205,9 +207,9 @@ public class IBMMQSink extends Sink {
             consumer = session.createConsumer(queue);
             messageSender = session.createSender(queue);
 
-        } catch (Exception e) {
-            throw new ConnectionUnavailableException("Exception in starting the IBM MQ receiver for queue: "
-                    + queueName, e);
+        } catch (JMSException e) {
+            throw new ConnectionUnavailableException("Exception occurred while connecting to the IBM MQ for queue: '"
+                    + queueName + "' in siddhi app: '" + siddhiAppContext.getName() + "'. ", e);
         }
     }
 

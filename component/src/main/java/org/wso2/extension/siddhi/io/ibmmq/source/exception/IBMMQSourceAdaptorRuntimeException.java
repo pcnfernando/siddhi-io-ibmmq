@@ -22,20 +22,20 @@ package org.wso2.extension.siddhi.io.ibmmq.source.exception;
 /**
  * IBM MQ input adaptor specific exception.
  */
-public class IBMMQInputAdaptorRuntimeException extends RuntimeException {
+public class IBMMQSourceAdaptorRuntimeException extends RuntimeException {
 
-    public IBMMQInputAdaptorRuntimeException() {
+    public IBMMQSourceAdaptorRuntimeException() {
     }
 
-    public IBMMQInputAdaptorRuntimeException(String message) {
+    public IBMMQSourceAdaptorRuntimeException(String message) {
         super(message);
     }
 
-    public IBMMQInputAdaptorRuntimeException(String message, Throwable cause) {
+    public IBMMQSourceAdaptorRuntimeException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public IBMMQInputAdaptorRuntimeException(Throwable cause) {
+    public IBMMQSourceAdaptorRuntimeException(Throwable cause) {
         super(cause);
     }
 }

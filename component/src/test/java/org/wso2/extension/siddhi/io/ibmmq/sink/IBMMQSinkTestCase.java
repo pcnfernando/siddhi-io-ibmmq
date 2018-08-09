@@ -37,21 +37,19 @@ import javax.jms.JMSException;
 public class IBMMQSinkTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(IBMMQSinkTestCase.class);
     private volatile int count;
-    private volatile boolean eventArrived;
     private AtomicInteger eventCount = new AtomicInteger(0);
 
     @BeforeMethod
     public void init() {
         eventCount.set(0);
         count = 0;
-        eventArrived = false;
     }
 
     @Test
     public void sinkTestCase1() throws InterruptedException, JMSException {
         LOG.info("IBM MQ Sink Test case 1 - Mandatory field test case with username and password");
         SiddhiManager siddhiManager = new SiddhiManager();
-        SiddhiAppRuntime siddhiAppRuntime = null;
+        SiddhiAppRuntime siddhiAppRuntime;
 
         String inStreamDefinition = "@sink(type='ibmmq',\n" +
                 "        destination.name='Queue1',\n" +
@@ -74,6 +72,7 @@ public class IBMMQSinkTestCase {
             public void receive(long timestamp, Event[] inEvents, Event[] removeEvents) {
                 count = inEvents.length;
                 EventPrinter.print(timestamp, inEvents, removeEvents);
+                AssertJUnit.assertEquals(1, count);
             }
         });
         siddhiAppRuntime.start();

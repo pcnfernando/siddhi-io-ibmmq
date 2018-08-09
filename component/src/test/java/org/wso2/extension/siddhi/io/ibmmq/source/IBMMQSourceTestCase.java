@@ -21,18 +21,31 @@ package org.wso2.extension.siddhi.io.ibmmq.source;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.AssertJUnit;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.wso2.siddhi.core.SiddhiAppRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.event.Event;
 import org.wso2.siddhi.core.query.output.callback.QueryCallback;
+import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.util.EventPrinter;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class IBMMQSourceTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(IBMMQSourceTestCase.class);
+    private volatile int count;
+    private AtomicInteger eventCount = new AtomicInteger(0);
+
+    @BeforeMethod
+    public void init() {
+        eventCount.set(0);
+        count = 0;
+    }
 
     @Test
-    public void sourceTestCase1() {
+    public void sourceTestCase1() throws InterruptedException {
         LOG.info("IBM MQ Source Test case 1 - Mandatory field test case with username and password");
         SiddhiManager siddhiManager = new SiddhiManager();
         SiddhiAppRuntime siddhiAppRuntime = null;
@@ -53,13 +66,18 @@ public class IBMMQSourceTestCase {
                 "from SweetProductionStream select * insert into outStream;";
 
         siddhiAppRuntime = siddhiManager.createSiddhiAppRuntime(inStreamDefinition + outStream + query);
+        InputHandler inputStream = siddhiAppRuntime.getInputHandler("SweetProductionStream");
         siddhiAppRuntime.addCallback("query2", new QueryCallback() {
             @Override
             public void receive(long timestamp, Event[] inEvents, Event[] removeEvents) {
+                count = inEvents.length;
                 EventPrinter.print(timestamp, inEvents, removeEvents);
             }
         });
         siddhiAppRuntime.start();
+        inputStream.send(new Object[]{"event1"});
+        AssertJUnit.assertEquals(1, count);
+
         siddhiManager.shutdown();
     }
 }

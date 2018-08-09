@@ -58,10 +58,10 @@ import javax.jms.Session;
 @Extension(
         name = "ibmmq",
         namespace = "sink",
-        description = "IBM MQ Sink allows users to subscribe to a IBM MQ broker and send messages.",
+        description = "IBM MQ Sink allows users to publish messages to an IBM MQ broker",
         parameters = {
                 @Parameter(name = IBMMQConstants.DESTINATION_NAME,
-                        description = "Queue name which IBM MQ Source should subscribe to",
+                        description = "Queue name which IBM MQ sink should send events to",
                         type = DataType.STRING),
                 @Parameter(name = IBMMQConstants.HOST,
                         description = "Host address of the MQ server",
@@ -70,7 +70,7 @@ import javax.jms.Session;
                         description = "Port of the MQ server",
                         type = DataType.STRING),
                 @Parameter(name = IBMMQConstants.CHANNEL,
-                        description = "Channel of the MQ server which should use to connect",
+                        description = "Channel used to connect to the MQ server",
                         type = DataType.STRING),
                 @Parameter(name = IBMMQConstants.QUEUE_MANAGER_NAME,
                         description = "Name of the Queue Manager",
@@ -91,7 +91,7 @@ import javax.jms.Session;
         examples = {
                 @Example(description = "This example shows how to connect to an IBM MQ queue and "
                         + "send messages.",
-                        syntax = "@source(type='ibmmq',"
+                        syntax = "@sink(type='ibmmq',"
                                 + "destination.name='Queue1',"
                                 + "host='192.168.56.3',"
                                 + "port='1414',"
@@ -216,14 +216,19 @@ public class IBMMQSink extends Sink {
     @Override
     public void disconnect() {
         try {
-            if (Objects.nonNull(connection)) {
-                connection.close();
-            }
             if (Objects.nonNull(consumer)) {
                 consumer.close();
             }
         } catch (JMSException e) {
-            LOG.error("Error disconnecting the IBM MQ connection for the queue: " + queueName + ". ", e);
+            LOG.error("Error occurred while closing the consumer for the queue: " + queueName + ". ", e);
+
+        }
+        try {
+            if (Objects.nonNull(connection)) {
+                connection.close();
+            }
+        } catch (JMSException e) {
+            LOG.error("Error occurred while closing the IBM MQ connection for the queue: " + queueName + ". ", e);
         }
     }
 

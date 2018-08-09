@@ -63,7 +63,7 @@ import javax.jms.Session;
                         description = "Port of the IBM MQ server",
                         type = DataType.STRING),
                 @Parameter(name = IBMMQConstants.CHANNEL,
-                        description = "Channel of the IBM MQ server which should use to connect",
+                        description = "Channel used to connect to the MQ server\n",
                         type = DataType.STRING),
                 @Parameter(name = IBMMQConstants.QUEUE_MANAGER_NAME,
                         description = "Name of the Queue Manager",
@@ -178,15 +178,19 @@ public class IBMMQSource extends Source {
     @Override
     public void disconnect() {
         try {
-            if (Objects.nonNull(connection)) {
-                connection.close();
-                ibmMessageConsumer.kill();
-            }
             if (Objects.nonNull(consumer)) {
                 consumer.close();
             }
         } catch (JMSException e) {
-            LOG.error("Error disconnecting the IBM MQ connection for the queue: " + queueName + ". ", e);
+            LOG.error("Error occurred while closing the consumer for the queue: " + queueName + ". ", e);
+
+        }
+        try {
+            if (Objects.nonNull(connection)) {
+                connection.close();
+            }
+        } catch (JMSException e) {
+            LOG.error("Error occurred while closing the IBM MQ connection for the queue: " + queueName + ". ", e);
         }
     }
 

@@ -113,8 +113,8 @@ public class IBMMQSink extends Sink {
     private Queue queue;
     private QueueSender messageSender;
     private MessageConsumer consumer;
-    private String userName = null;
-    private String password = null;
+    private String userName;
+    private String password;
     private boolean isSecured = false;
 
     @Override
@@ -132,22 +132,10 @@ public class IBMMQSink extends Sink {
             sinkConfigReader, SiddhiAppContext siddhiAppContext) {
         this.optionHolder = optionHolder;
         connectionFactory = new MQQueueConnectionFactory();
-        if (Objects.nonNull(optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME, null)) ||
-                Objects.nonNull(sinkConfigReader.readConfig(IBMMQConstants.USER_NAME, null))) {
-            if (Objects.nonNull(optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME, null))) {
-                this.userName = optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME);
-            } else {
-                this.userName = sinkConfigReader.readConfig(IBMMQConstants.USER_NAME, null);
-            }
-        }
-        if (Objects.nonNull(optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD, null)) ||
-                Objects.nonNull(sinkConfigReader.readConfig(IBMMQConstants.PASSWORD, null))) {
-            if (Objects.nonNull(optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD, null))) {
-                this.password = optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD);
-            } else {
-                this.password = sinkConfigReader.readConfig(IBMMQConstants.PASSWORD, null);
-            }
-        }
+        this.userName = optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME,
+                sinkConfigReader.readConfig(IBMMQConstants.USER_NAME, null));
+        this.password = optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD,
+                sinkConfigReader.readConfig(IBMMQConstants.PASSWORD, null));
 
         if (Objects.nonNull(userName) && Objects.nonNull(password)) {
             isSecured = true;

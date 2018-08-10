@@ -133,7 +133,7 @@
     </tr>
     <tr>
         <td style="vertical-align: top">channel</td>
-        <td style="vertical-align: top; word-wrap: break-word">Channel used to connect to the MQ server<br></td>
+        <td style="vertical-align: top; word-wrap: break-word">Channel used to connect to the MQ server</td>
         <td style="vertical-align: top"></td>
         <td style="vertical-align: top">STRING</td>
         <td style="vertical-align: top">No</td>

@@ -31,17 +31,14 @@ import org.wso2.siddhi.core.query.output.callback.QueryCallback;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.util.EventPrinter;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.jms.JMSException;
 
 public class IBMMQSinkTestCase {
     private static final Logger LOG = LoggerFactory.getLogger(IBMMQSinkTestCase.class);
     private volatile int count;
-    private AtomicInteger eventCount = new AtomicInteger(0);
 
     @BeforeMethod
     public void init() {
-        eventCount.set(0);
         count = 0;
     }
 

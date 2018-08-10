@@ -36,6 +36,7 @@ import org.wso2.siddhi.core.stream.input.source.SourceEventListener;
 import org.wso2.siddhi.core.util.config.ConfigReader;
 import org.wso2.siddhi.core.util.transport.OptionHolder;
 
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
@@ -63,7 +64,7 @@ import javax.jms.Session;
                         description = "Port of the IBM MQ server",
                         type = DataType.STRING),
                 @Parameter(name = IBMMQConstants.CHANNEL,
-                        description = "Channel used to connect to the MQ server\n",
+                        description = "Channel used to connect to the MQ server",
                         type = DataType.STRING),
                 @Parameter(name = IBMMQConstants.QUEUE_MANAGER_NAME,
                         description = "Name of the Queue Manager",
@@ -172,7 +173,7 @@ public class IBMMQSource extends Source {
 
     @Override
     public Class[] getOutputEventClasses() {
-        return new Class[]{String.class, Map.class};
+        return new Class[]{String.class, Map.class, ByteBuffer.class};
     }
 
     @Override

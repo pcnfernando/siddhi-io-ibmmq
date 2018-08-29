@@ -6,6 +6,11 @@
      <changefreq>daily</changefreq>
     </url>
     <url>
+     <loc>https://wso2-extensions.github.io/siddhi-io-ibmmq/api/1.0.2/</loc>
+     <lastmod>2018-08-29</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
      <loc>https://wso2-extensions.github.io/siddhi-io-ibmmq/api/1.0.1/</loc>
      <lastmod>2018-08-29</lastmod>
      <changefreq>daily</changefreq>

@@ -58,39 +58,38 @@ import javax.jms.Session;
 @Extension(
         name = "ibmmq",
         namespace = "sink",
-        description = "IBM MQ Sink allows users to publish messages to an IBM MQ broker",
+        description = "IBM MQ Sink allows users to publish messages to an IBM MQ broker.",
         parameters = {
                 @Parameter(name = IBMMQConstants.DESTINATION_NAME,
-                        description = "Queue name which IBM MQ sink should send events to",
+                        description = "The name of the queue to which the IBM MQ sink should send events.",
                         type = DataType.STRING),
                 @Parameter(name = IBMMQConstants.HOST,
-                        description = "Host address of the MQ server",
+                        description = "The host address of the MQ server.",
                         type = DataType.STRING),
                 @Parameter(name = IBMMQConstants.PORT,
-                        description = "Port of the MQ server",
+                        description = "The port of the MQ server.",
                         type = DataType.STRING),
                 @Parameter(name = IBMMQConstants.CHANNEL,
-                        description = "Channel used to connect to the MQ server",
+                        description = "The channel used to connect to the MQ server.",
                         type = DataType.STRING),
                 @Parameter(name = IBMMQConstants.QUEUE_MANAGER_NAME,
-                        description = "Name of the Queue Manager",
+                        description = "The name of the queue manager.",
                         type = DataType.STRING),
                 @Parameter(name = IBMMQConstants.USER_NAME,
-                        description = "User name of the server. If this is not provided, " +
-                                "will try to connect without both username and password",
+                        description = "The username to connect to the server. If this is not provided, the " +
+                                "connection is attempted without both the username and the password.",
                         type = DataType.STRING,
                         optional = true,
                         defaultValue = "null"),
                 @Parameter(name = IBMMQConstants.PASSWORD,
-                        description = "Password of the server. If this is not provided, will try to connect without " +
-                                "both username and password",
+                        description = "The password to connect to the server. If this is not provided, the " +
+                                "connection is attempted without both the username and the password.",
                         type = DataType.STRING,
                         optional = true,
                         defaultValue = "null"),
         },
         examples = {
-                @Example(description = "This example shows how to connect to an IBM MQ queue and "
-                        + "send messages.",
+                @Example(
                         syntax = "@sink(type='ibmmq',"
                                 + "destination.name='Queue1',"
                                 + "host='192.168.56.3',"
@@ -100,7 +99,8 @@ import javax.jms.Session;
                                 + "password='1920',"
                                 + "username='mqm',"
                                 + "@map(type='text'))"
-                                + "define stream SweetProductionStream(name string, amount double);"),
+                                + "define stream SweetProductionStream(name string, amount double);",
+                        description = "This example shows how to connect to an IBM MQ queue and send messages."),
         }
 )
 

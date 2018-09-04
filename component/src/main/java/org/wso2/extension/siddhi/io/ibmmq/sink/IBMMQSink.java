@@ -58,7 +58,7 @@ import javax.jms.Session;
 @Extension(
         name = "ibmmq",
         namespace = "sink",
-        description = "IBM MQ Sink allows users to publish messages to an IBM MQ broker.",
+        description = "IBM MQ sink allows you to publish messages to an IBM MQ broker.",
         parameters = {
                 @Parameter(name = IBMMQConstants.DESTINATION_NAME,
                         description = "The name of the queue to which the IBM MQ sink should send events.",

@@ -28,7 +28,7 @@
 
     <groupId>org.wso2.extension.siddhi.io.ibmmq</groupId>
     <artifactId>siddhi-io-ibmmq-parent</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.3</version>
     <name>Siddhi IO IBMMQ Extension Parent</name>
 
     <modules>
@@ -143,7 +143,7 @@
         <url>https://github.com/wso2-extensions/siddhi-io-ibmmq.git</url>
         <developerConnection>scm:git:https://github.com/wso2-extensions/siddhi-io-ibmmq.git</developerConnection>
         <connection>scm:git:https://github.com/wso2-extensions/siddhi-io-ibmmq.git</connection>
-        <tag>HEAD</tag>
+        <tag>v1.0.3</tag>
     </scm>
 
 </project>

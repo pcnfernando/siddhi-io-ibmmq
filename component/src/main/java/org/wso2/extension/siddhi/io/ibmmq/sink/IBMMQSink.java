@@ -186,7 +186,6 @@ public class IBMMQSink extends Sink {
                 bytesMessage.writeBytes(data);
                 messageSender.send(bytesMessage);
             }
-            messageSender.close();
         } catch (JMSException e) {
             throw new IBMMQSinkAdaptorRuntimeException("Exception occurred while publishing payload: " +
                     payload.toString() + " , ", e);
@@ -216,19 +215,34 @@ public class IBMMQSink extends Sink {
     @Override
     public void disconnect() {
         try {
-            if (Objects.nonNull(consumer)) {
-                consumer.close();
-            }
-        } catch (JMSException e) {
-            LOG.error("Error occurred while closing the consumer for the queue: " + queueName + ". ", e);
 
-        }
-        try {
-            if (Objects.nonNull(connection)) {
-                connection.close();
+        } finally {
+            if (Objects.nonNull(messageSender)) {
+                try {
+                    messageSender.close();
+
+                } catch (JMSException e) {
+
+                    LOG.error("Error occurred while closing the message sender for the queue: " + queueName + " in " +
+                            "siddhi app " + siddhiAppContext.getName(), e);
+                }
             }
-        } catch (JMSException e) {
-            LOG.error("Error occurred while closing the IBM MQ connection for the queue: " + queueName + ". ", e);
+            if (Objects.nonNull(consumer)) {
+                try {
+                    consumer.close();
+                } catch (JMSException e) {
+                    LOG.error("Error occurred while closing the consumer for the queue: " + queueName + " in " +
+                            "                            \"siddhi app \" + siddhiAppContext.getName()", e);
+                }
+            }
+            if (Objects.nonNull(connection)) {
+                try {
+                    connection.close();
+                } catch (JMSException e) {
+                    LOG.error("Error occurred while closing the IBM MQ connection for the queue: " + queueName + " in" +
+                            " siddhi app" + siddhiAppContext.getName() + " ", e);
+                }
+            }
         }
     }
 

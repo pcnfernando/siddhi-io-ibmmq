@@ -218,19 +218,26 @@ public class IBMMQSink extends Sink {
             if (Objects.nonNull(messageSender)) {
                 messageSender.close();
             }
+        } catch (JMSException e) {
+            LOG.error("Error occurred while closing the message sender for the queue: " + queueName + " in " +
+                    "siddhi app " + siddhiAppContext.getName(), e);
+        } finally {
             if (Objects.nonNull(consumer)) {
-                consumer.close();
+                try {
+                    consumer.close();
+                } catch (JMSException e) {
+                    LOG.error("Error occurred while closing the consumer for the queue: " + queueName + " in " +
+                            "                            \"siddhi app \" + siddhiAppContext.getName()", e);
+                }
             }
-        } catch (JMSException e) {
-            LOG.error("Error occurred while closing the consumer for the queue: " + queueName + ". ", e);
-
-        }
-        try {
             if (Objects.nonNull(connection)) {
-                connection.close();
+                try {
+                    connection.close();
+                } catch (JMSException e) {
+                    LOG.error("Error occurred while closing the IBM MQ connection for the queue: " + queueName + " in" +
+                            " siddhi app" + siddhiAppContext.getName() + " ", e);
+                }
             }
-        } catch (JMSException e) {
-            LOG.error("Error occurred while closing the IBM MQ connection for the queue: " + queueName + ". ", e);
         }
     }
 

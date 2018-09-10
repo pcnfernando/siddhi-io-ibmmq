@@ -186,7 +186,6 @@ public class IBMMQSink extends Sink {
                 bytesMessage.writeBytes(data);
                 messageSender.send(bytesMessage);
             }
-            messageSender.close();
         } catch (JMSException e) {
             throw new IBMMQSinkAdaptorRuntimeException("Exception occurred while publishing payload: " +
                     payload.toString() + " , ", e);
@@ -216,6 +215,9 @@ public class IBMMQSink extends Sink {
     @Override
     public void disconnect() {
         try {
+            if (Objects.nonNull(messageSender)) {
+                messageSender.close();
+            }
             if (Objects.nonNull(consumer)) {
                 consumer.close();
             }

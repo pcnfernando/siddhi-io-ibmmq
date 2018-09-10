@@ -215,13 +215,18 @@ public class IBMMQSink extends Sink {
     @Override
     public void disconnect() {
         try {
-            if (Objects.nonNull(messageSender)) {
-                messageSender.close();
-            }
-        } catch (JMSException e) {
-            LOG.error("Error occurred while closing the message sender for the queue: " + queueName + " in " +
-                    "siddhi app " + siddhiAppContext.getName(), e);
+
         } finally {
+            if (Objects.nonNull(messageSender)) {
+                try {
+                    messageSender.close();
+
+                } catch (JMSException e) {
+
+                    LOG.error("Error occurred while closing the message sender for the queue: " + queueName + " in " +
+                            "siddhi app " + siddhiAppContext.getName(), e);
+                }
+            }
             if (Objects.nonNull(consumer)) {
                 try {
                     consumer.close();

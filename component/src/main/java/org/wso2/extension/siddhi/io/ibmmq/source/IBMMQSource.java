@@ -183,7 +183,7 @@ public class IBMMQSource extends Source {
         if (ibmMessageConsumerGroup != null) {
             ibmMessageConsumerGroup.resume();
             if (logger.isDebugEnabled()) {
-                logger.debug("Kafka Adapter resumed for queue '" + ibmMessageConsumerBean.getQueueName() + "'");
+                logger.debug("IBM MQ source resumed for queue '" + ibmMessageConsumerBean.getQueueName() + "'");
             }
         }
     }

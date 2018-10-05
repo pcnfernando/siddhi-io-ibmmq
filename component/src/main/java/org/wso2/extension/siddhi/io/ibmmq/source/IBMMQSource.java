@@ -78,7 +78,8 @@ import javax.jms.JMSException;
                         optional = true,
                         defaultValue = "null"),
                 @Parameter(name = IBMMQConstants.WORKER_COUNT,
-                        description = "Number of worker threads listening on the given queue.",
+                        description = "Number of worker threads listening on the given queue. When the multiple " +
+                                "workers are enabled even ordering is not preserved.",
                         type = DataType.INT,
                         optional = true,
                         defaultValue = "1"),

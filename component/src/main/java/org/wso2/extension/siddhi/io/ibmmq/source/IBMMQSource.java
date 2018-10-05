@@ -18,7 +18,6 @@
  */
 package org.wso2.extension.siddhi.io.ibmmq.source;
 
-import com.ibm.mq.jms.MQConnection;
 import com.ibm.mq.jms.MQQueueConnectionFactory;
 import com.ibm.msg.client.wmq.WMQConstants;
 import org.slf4j.Logger;
@@ -41,9 +40,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.jms.JMSException;
-import javax.jms.MessageConsumer;
-import javax.jms.Queue;
-import javax.jms.Session;
 
 /**
  * IBM MQ Source implementation.
@@ -81,6 +77,12 @@ import javax.jms.Session;
                         type = DataType.STRING,
                         optional = true,
                         defaultValue = "null"),
+                @Parameter(name = IBMMQConstants.WORKER_COUNT,
+                        description = "Number of worker threads listening on the given queue. When the multiple " +
+                                "workers are enabled event ordering is not preserved.",
+                        type = DataType.INT,
+                        optional = true,
+                        defaultValue = "1"),
         },
         examples = {
                 @Example(description = "This example shows how to connect to an IBM message queue and "
@@ -99,39 +101,32 @@ import javax.jms.Session;
 )
 
 public class IBMMQSource extends Source {
-    private static final Logger LOG = LoggerFactory.getLogger(IBMMQSource.class);
+    private static final Logger logger = LoggerFactory.getLogger(IBMMQSource.class);
     private SourceEventListener sourceEventListener;
-    private OptionHolder optionHolder;
-    private MQConnection connection;
     private MQQueueConnectionFactory connectionFactory;
-    private Session session;
-    private Queue queue;
-    private MessageConsumer consumer;
-    private IBMMessageConsumer ibmMessageConsumer;
+    private IBMMessageConsumerGroup ibmMessageConsumerGroup;
     private ScheduledExecutorService scheduledExecutorService;
-    private String userName;
-    private String password;
-    private String queueName;
-    private SiddhiAppContext siddhiAppContext;
-    private boolean isSecured = false;
+    private IBMMessageConsumerBean ibmMessageConsumerBean = new IBMMessageConsumerBean();
 
 
     @Override
     public void init(SourceEventListener sourceEventListener, OptionHolder optionHolder,
                      String[] requestedTransportPropertyNames, ConfigReader configReader,
                      SiddhiAppContext siddhiAppContext) {
-        this.siddhiAppContext = siddhiAppContext;
         this.sourceEventListener = sourceEventListener;
-        this.optionHolder = optionHolder;
         this.connectionFactory = new MQQueueConnectionFactory();
-        this.queueName = optionHolder.validateAndGetStaticValue(IBMMQConstants.DESTINATION_NAME);
-        this.userName = optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME,
-                configReader.readConfig(IBMMQConstants.USER_NAME, null));
-        this.password = optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD,
-                configReader.readConfig(IBMMQConstants.PASSWORD, null));
-
-        if (Objects.nonNull(password) && Objects.nonNull(userName)) {
-            isSecured = true;
+        ibmMessageConsumerBean.setQueueName(optionHolder.validateAndGetStaticValue(IBMMQConstants.DESTINATION_NAME));
+        ibmMessageConsumerBean.setUserName(optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME,
+                configReader.readConfig(IBMMQConstants.USER_NAME, null)));
+        ibmMessageConsumerBean.setPassword(optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD,
+                configReader.readConfig(IBMMQConstants.PASSWORD, null)));
+        ibmMessageConsumerBean.setWorkerCount(Integer.parseInt(optionHolder.validateAndGetStaticValue(
+                IBMMQConstants.WORKER_COUNT, "1")));
+        ibmMessageConsumerBean.setDestinationName(optionHolder.validateAndGetOption(IBMMQConstants.DESTINATION_NAME)
+                .getValue());
+        if (Objects.nonNull(ibmMessageConsumerBean.getPassword()) &&
+                Objects.nonNull(ibmMessageConsumerBean.getUserName())) {
+            ibmMessageConsumerBean.setSecured(true);
         }
         try {
             connectionFactory.setChannel(optionHolder.validateAndGetOption(IBMMQConstants.CHANNEL).getValue());
@@ -151,24 +146,10 @@ public class IBMMQSource extends Source {
 
     @Override
     public void connect(ConnectionCallback connectionCallback) throws ConnectionUnavailableException {
-        //ConnectionCallback is not used as re-connection is handled by carbon transport.
-        try {
-            if (isSecured) {
-                connection = (MQConnection) connectionFactory.createConnection(userName, password);
-            } else {
-                connection = (MQConnection) connectionFactory.createConnection();
-            }
-            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            queue = session.createQueue(optionHolder.validateAndGetOption(IBMMQConstants.DESTINATION_NAME)
-                    .getValue());
-            consumer = session.createConsumer(queue);
-            ibmMessageConsumer = new IBMMessageConsumer(sourceEventListener, connection, consumer);
-            ibmMessageConsumer.consume(ibmMessageConsumer, scheduledExecutorService);
-
-        } catch (JMSException e) {
-            throw new ConnectionUnavailableException("Exception occurred while connecting to the IBM MQ for queue: '"
-                    + queueName + "' in siddhi app: '" + siddhiAppContext.getName() + "' . ", e);
-        }
+        //ConnectionCallback is not used as re-connection is handled by IBM MQ client.
+        ibmMessageConsumerGroup = new IBMMessageConsumerGroup(scheduledExecutorService,
+                connectionFactory, ibmMessageConsumerBean);
+        ibmMessageConsumerGroup.run(sourceEventListener);
     }
 
     @Override
@@ -178,36 +159,34 @@ public class IBMMQSource extends Source {
 
     @Override
     public void disconnect() {
-        try {
-            if (Objects.nonNull(consumer)) {
-                consumer.close();
-            }
-        } catch (JMSException e) {
-            LOG.error("Error occurred while closing the consumer for the queue: " + queueName + ". ", e);
-
-        }
-        try {
-            if (Objects.nonNull(connection)) {
-                connection.close();
-            }
-        } catch (JMSException e) {
-            LOG.error("Error occurred while closing the IBM MQ connection for the queue: " + queueName + ". ", e);
+        if (ibmMessageConsumerGroup != null) {
+            ibmMessageConsumerGroup.shutdown();
+            logger.info("IBM MQ source disconnected for queue '" + ibmMessageConsumerBean.getQueueName() + "'");
         }
     }
 
     @Override
     public void destroy() {
-        // disconnect() gets called before destroy() which does the cleanup destroy() needs
+        ibmMessageConsumerGroup = null;
+        scheduledExecutorService.shutdown();
     }
 
     @Override
     public void pause() {
-        ibmMessageConsumer.pause();
+        if (ibmMessageConsumerGroup != null) {
+            ibmMessageConsumerGroup.pause();
+            logger.info("IBM MQ source paused for queue '" + ibmMessageConsumerBean.getQueueName() + "'");
+        }
     }
 
     @Override
     public void resume() {
-        ibmMessageConsumer.resume();
+        if (ibmMessageConsumerGroup != null) {
+            ibmMessageConsumerGroup.resume();
+            if (logger.isDebugEnabled()) {
+                logger.debug("IBM MQ source resumed for queue '" + ibmMessageConsumerBean.getQueueName() + "'");
+            }
+        }
     }
 
     @Override

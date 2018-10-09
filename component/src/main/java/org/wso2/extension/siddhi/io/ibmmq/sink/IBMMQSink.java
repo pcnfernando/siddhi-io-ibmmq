@@ -89,8 +89,7 @@ import javax.jms.Session;
                         defaultValue = "null"),
         },
         examples = {
-                @Example(description = "This example shows how to connect to an IBM MQ queue and "
-                        + "send messages.",
+                @Example(description = "This example shows how to connect to an IBM MQ queue and send messages.",
                         syntax = "@sink(type='ibmmq',"
                                 + "destination.name='Queue1',"
                                 + "host='192.168.56.3',"
@@ -155,10 +154,8 @@ public class IBMMQSink extends Sink {
             connectionFactory.setChannel(optionHolder.validateAndGetOption(IBMMQConstants.CHANNEL).getValue());
         } catch (JMSException e) {
             throw new IBMMQSinkAdaptorRuntimeException("Error while initializing IBM MQ sink: " + optionHolder.
-                    validateAndGetOption(IBMMQConstants.DESTINATION_NAME).getValue() +
-                    ", " + e.getMessage(), e);
+                    validateAndGetOption(IBMMQConstants.DESTINATION_NAME).getValue() + ", " + e.getMessage(), e);
         }
-
     }
 
     @Override
@@ -167,7 +164,6 @@ public class IBMMQSink extends Sink {
             if (payload instanceof String) {
                 Message message = session.createTextMessage(payload.toString());
                 messageSender.send(message);
-
             } else if (payload instanceof Map) {
                 MapMessage mapMessage = session.createMapMessage();
                 ((Map) payload).forEach((key, value) -> {
@@ -205,7 +201,6 @@ public class IBMMQSink extends Sink {
                     .getValue());
             consumer = session.createConsumer(queue);
             messageSender = session.createSender(queue);
-
         } catch (JMSException e) {
             throw new ConnectionUnavailableException("Exception occurred while connecting to the IBM MQ for queue: '"
                     + queueName + "' in siddhi app: '" + siddhiAppContext.getName() + "'. ", e);
@@ -220,9 +215,7 @@ public class IBMMQSink extends Sink {
             if (Objects.nonNull(messageSender)) {
                 try {
                     messageSender.close();
-
                 } catch (JMSException e) {
-
                     LOG.error("Error occurred while closing the message sender for the queue: " + queueName + " in " +
                             "siddhi app " + siddhiAppContext.getName(), e);
                 }

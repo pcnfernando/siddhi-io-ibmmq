@@ -30,4 +30,5 @@ public class IBMMQConstants {
     public static final String QUEUE_MANAGER_NAME = "queue.manager";
     public static final String USER_NAME = "username";
     public static final String PASSWORD = "password";
+    public static final String WORKER_COUNT = "worker.count";
 }

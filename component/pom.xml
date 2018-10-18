@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.wso2.extension.siddhi.io.ibmmq</groupId>
         <artifactId>siddhi-io-ibmmq-parent</artifactId>
-        <version>1.0.3-SNAPSHOT</version>
+        <version>1.0.7-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -63,6 +63,12 @@
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

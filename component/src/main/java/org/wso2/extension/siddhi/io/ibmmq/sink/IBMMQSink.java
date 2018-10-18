@@ -89,7 +89,7 @@ import javax.jms.Session;
                         defaultValue = "null"),
         },
         examples = {
-                @Example(
+                @Example(description = "This example shows how to connect to an IBM MQ queue and send messages.",
                         syntax = "@sink(type='ibmmq',"
                                 + "destination.name='Queue1',"
                                 + "host='192.168.56.3',"
@@ -155,10 +155,8 @@ public class IBMMQSink extends Sink {
             connectionFactory.setChannel(optionHolder.validateAndGetOption(IBMMQConstants.CHANNEL).getValue());
         } catch (JMSException e) {
             throw new IBMMQSinkAdaptorRuntimeException("Error while initializing IBM MQ sink: " + optionHolder.
-                    validateAndGetOption(IBMMQConstants.DESTINATION_NAME).getValue() +
-                    ", " + e.getMessage(), e);
+                    validateAndGetOption(IBMMQConstants.DESTINATION_NAME).getValue() + ", " + e.getMessage(), e);
         }
-
     }
 
     @Override
@@ -167,7 +165,6 @@ public class IBMMQSink extends Sink {
             if (payload instanceof String) {
                 Message message = session.createTextMessage(payload.toString());
                 messageSender.send(message);
-
             } else if (payload instanceof Map) {
                 MapMessage mapMessage = session.createMapMessage();
                 ((Map) payload).forEach((key, value) -> {
@@ -186,7 +183,6 @@ public class IBMMQSink extends Sink {
                 bytesMessage.writeBytes(data);
                 messageSender.send(bytesMessage);
             }
-            messageSender.close();
         } catch (JMSException e) {
             throw new IBMMQSinkAdaptorRuntimeException("Exception occurred while publishing payload: " +
                     payload.toString() + " , ", e);
@@ -206,7 +202,6 @@ public class IBMMQSink extends Sink {
                     .getValue());
             consumer = session.createConsumer(queue);
             messageSender = session.createSender(queue);
-
         } catch (JMSException e) {
             throw new ConnectionUnavailableException("Exception occurred while connecting to the IBM MQ for queue: '"
                     + queueName + "' in siddhi app: '" + siddhiAppContext.getName() + "'. ", e);
@@ -216,19 +211,32 @@ public class IBMMQSink extends Sink {
     @Override
     public void disconnect() {
         try {
-            if (Objects.nonNull(consumer)) {
-                consumer.close();
-            }
-        } catch (JMSException e) {
-            LOG.error("Error occurred while closing the consumer for the queue: " + queueName + ". ", e);
 
-        }
-        try {
-            if (Objects.nonNull(connection)) {
-                connection.close();
+        } finally {
+            if (Objects.nonNull(messageSender)) {
+                try {
+                    messageSender.close();
+                } catch (JMSException e) {
+                    LOG.error("Error occurred while closing the message sender for the queue: " + queueName + " in " +
+                            "siddhi app " + siddhiAppContext.getName(), e);
+                }
             }
-        } catch (JMSException e) {
-            LOG.error("Error occurred while closing the IBM MQ connection for the queue: " + queueName + ". ", e);
+            if (Objects.nonNull(consumer)) {
+                try {
+                    consumer.close();
+                } catch (JMSException e) {
+                    LOG.error("Error occurred while closing the consumer for the queue: " + queueName + " in " +
+                            "                            \"siddhi app \" + siddhiAppContext.getName()", e);
+                }
+            }
+            if (Objects.nonNull(connection)) {
+                try {
+                    connection.close();
+                } catch (JMSException e) {
+                    LOG.error("Error occurred while closing the IBM MQ connection for the queue: " + queueName + " in" +
+                            " siddhi app" + siddhiAppContext.getName() + " ", e);
+                }
+            }
         }
     }
 

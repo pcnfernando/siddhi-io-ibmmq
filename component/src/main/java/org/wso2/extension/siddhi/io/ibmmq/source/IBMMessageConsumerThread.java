@@ -106,6 +106,8 @@ public class IBMMessageConsumerThread implements Runnable {
             } catch (JMSException e) {
                 throw new IBMMQSourceAdaptorRuntimeException("Exception occurred during consuming messages " +
                         "from the queue: " + e.getMessage(), e);
+            } catch (Throwable t) {
+                logger.error("Exception occurred during consuming messages: " + t.getMessage(), t);
             }
         }
     }

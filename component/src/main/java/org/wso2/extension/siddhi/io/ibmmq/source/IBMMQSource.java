@@ -120,7 +120,6 @@ public class IBMMQSource extends Source {
     private SiddhiAppContext siddhiAppContext;
     private String properties;
 
-
     @Override
     public void init(SourceEventListener sourceEventListener, OptionHolder optionHolder,
                      String[] requestedTransportPropertyNames, ConfigReader configReader,

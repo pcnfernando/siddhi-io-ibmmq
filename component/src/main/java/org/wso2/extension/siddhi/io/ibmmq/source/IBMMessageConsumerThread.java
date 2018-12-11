@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.jms.ExceptionListener;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
@@ -53,27 +54,24 @@ public class IBMMessageConsumerThread implements Runnable {
     private ReentrantLock lock;
     private Condition condition;
     private String queueName;
+    private int maxRetryCount = 10;
+    private long retryInterval = 1000;
+    private IBMMessageConsumerBean ibmMessageConsumerBean;
+    private MQQueueConnectionFactory mqQueueConnectionFactory;
+    private IBMMQConnectionRetryHandler ibmmqConnectionRetryHandler;
 
     public IBMMessageConsumerThread(SourceEventListener sourceEventListener,
                                     IBMMessageConsumerBean ibmMessageConsumerBean,
                                     MQQueueConnectionFactory mqQueueConnectionFactory) throws JMSException {
-        if (ibmMessageConsumerBean.getPropertyMap() != null) {
-            mqQueueConnectionFactory.setBatchProperties(ibmMessageConsumerBean.getPropertyMap());
-        }
-        if (ibmMessageConsumerBean.isSecured()) {
-            connection = (MQConnection) mqQueueConnectionFactory.createConnection(
-                    ibmMessageConsumerBean.getUserName(), ibmMessageConsumerBean.getPassword());
-        } else {
-            connection = (MQConnection) mqQueueConnectionFactory.createConnection();
-        }
-        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        Queue queue = session.createQueue(ibmMessageConsumerBean.getDestinationName());
-        messageConsumer = session.createConsumer(queue);
-        this.connection.start();
+        this.ibmMessageConsumerBean = ibmMessageConsumerBean;
+        this.mqQueueConnectionFactory = mqQueueConnectionFactory;
         this.sourceEventListener = sourceEventListener;
         this.queueName = ibmMessageConsumerBean.getQueueName();
+        this.ibmmqConnectionRetryHandler = new IBMMQConnectionRetryHandler(this,
+                retryInterval, maxRetryCount);
         lock = new ReentrantLock();
         condition = lock.newCondition();
+        connect();
     }
 
     @Override
@@ -115,7 +113,6 @@ public class IBMMessageConsumerThread implements Runnable {
         }
     }
 
-
     void pause() {
         paused = true;
     }
@@ -147,5 +144,29 @@ public class IBMMessageConsumerThread implements Runnable {
         } catch (JMSException e) {
             logger.error("Error occurred while closing the IBM MQ connection for the queue: " + queueName + ". ", e);
         }
+    }
+
+    public void connect() throws JMSException {
+        if (ibmMessageConsumerBean.isSecured()) {
+            connection = (MQConnection) mqQueueConnectionFactory.createConnection(
+                    ibmMessageConsumerBean.getUserName(), ibmMessageConsumerBean.getPassword());
+        } else {
+            connection = (MQConnection) mqQueueConnectionFactory.createConnection();
+        }
+        ExceptionListener exceptionListener = new ExceptionListener() {
+            @Override
+            public void onException(JMSException e) {
+                logger.error("Exception was thrown from the IBMMQ connection.", e);
+                if (!ibmmqConnectionRetryHandler.retry()) {
+                    logger.error("Connection to the MQ provider failed after retrying for "
+                            + ibmmqConnectionRetryHandler.getRetryCount() + " times");
+                }
+            }
+        };
+        connection.setExceptionListener(exceptionListener);
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        Queue queue = session.createQueue(ibmMessageConsumerBean.getDestinationName());
+        this.messageConsumer = session.createConsumer(queue);
+        this.connection.start();
     }
 }

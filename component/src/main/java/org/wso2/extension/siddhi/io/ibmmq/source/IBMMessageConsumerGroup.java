@@ -36,7 +36,6 @@ public class IBMMessageConsumerGroup {
     private MQQueueConnectionFactory connectionFactory;
     private IBMMessageConsumerBean ibmMessageConsumerBean;
 
-
     IBMMessageConsumerGroup(ScheduledExecutorService executorService, MQQueueConnectionFactory connectionFactory,
                             IBMMessageConsumerBean ibmMessageConsumerBean) {
         this.executorService = executorService;

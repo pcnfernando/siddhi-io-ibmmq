@@ -22,6 +22,7 @@ import com.ibm.mq.jms.MQQueueConnectionFactory;
 import com.ibm.msg.client.wmq.WMQConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wso2.extension.siddhi.io.ibmmq.sink.exception.IBMMQSinkAdaptorRuntimeException;
 import org.wso2.extension.siddhi.io.ibmmq.source.exception.IBMMQSourceAdaptorRuntimeException;
 import org.wso2.extension.siddhi.io.ibmmq.util.IBMMQConstants;
 import org.wso2.siddhi.annotation.Example;
@@ -36,6 +37,7 @@ import org.wso2.siddhi.core.util.config.ConfigReader;
 import org.wso2.siddhi.core.util.transport.OptionHolder;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
@@ -83,18 +85,25 @@ import javax.jms.JMSException;
                         type = DataType.INT,
                         optional = true,
                         defaultValue = "1"),
+                @Parameter(name = IBMMQConstants.PROPERTIES,
+                        description = "IBM MQ properties can be provided as key value pairs which is separated" +
+                                " by \",\". as an example " +
+                                "properties = 'XMSC_WMQ_CLIENT_RECONNECT_OPTIONS:1600,WMQ_CLIENT_RECONNECT:5005' ",
+                        type = DataType.STRING,
+                        optional = true,
+                        defaultValue = "null")
         },
         examples = {
                 @Example(syntax = "@source(type='ibmmq',"
-                                + "destination.name='Queue1',"
-                                + "host='192.168.56.3',"
-                                + "port='1414',"
-                                + "channel='Channel1',"
-                                + "queue.manager = 'ESBQManager',"
-                                + "password='1920',"
-                                + "username='mqm',"
-                                + "@map(type='text'))"
-                                + "define stream SweetProductionStream(name string, amount double);",
+                        + "destination.name='Queue1',"
+                        + "host='192.168.56.3',"
+                        + "port='1414',"
+                        + "channel='Channel1',"
+                        + "queue.manager = 'ESBQManager',"
+                        + "password='1920',"
+                        + "username='mqm',"
+                        + "@map(type='text'))"
+                        + "define stream SweetProductionStream(name string, amount double);",
                         description = "This exampe shows how to connect to an IBM message queue and receive messages."),
         }
 )
@@ -106,6 +115,8 @@ public class IBMMQSource extends Source {
     private IBMMessageConsumerGroup ibmMessageConsumerGroup;
     private ScheduledExecutorService scheduledExecutorService;
     private IBMMessageConsumerBean ibmMessageConsumerBean = new IBMMessageConsumerBean();
+    private SiddhiAppContext siddhiAppContext;
+    private String properties;
 
 
     @Override
@@ -113,8 +124,15 @@ public class IBMMQSource extends Source {
                      String[] requestedTransportPropertyNames, ConfigReader configReader,
                      SiddhiAppContext siddhiAppContext) {
         this.sourceEventListener = sourceEventListener;
+        this.siddhiAppContext = siddhiAppContext;
+        this.properties = optionHolder.validateAndGetStaticValue(IBMMQConstants.PROPERTIES, configReader.readConfig
+                (IBMMQConstants.PROPERTIES, null));
+        if (properties != null) {
+            ibmMessageConsumerBean.setPropertyMap(generatePropertyMap(properties));
+        }
         this.connectionFactory = new MQQueueConnectionFactory();
-        ibmMessageConsumerBean.setQueueName(optionHolder.validateAndGetStaticValue(IBMMQConstants.DESTINATION_NAME));
+        ibmMessageConsumerBean.setQueueName(optionHolder.validateAndGetStaticValue(IBMMQConstants.DESTINATION_NAME,
+                configReader.readConfig(IBMMQConstants.DESTINATION_NAME, null)));
         ibmMessageConsumerBean.setUserName(optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME,
                 configReader.readConfig(IBMMQConstants.USER_NAME, null)));
         ibmMessageConsumerBean.setPassword(optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD,
@@ -196,5 +214,21 @@ public class IBMMQSource extends Source {
     @Override
     public void restoreState(Map<String, Object> state) {
         // no state to restore
+    }
+
+    private Map<String, Object> generatePropertyMap(String properties) {
+        Map<String, Object> propertyMap = new HashMap<>();
+        String[] propertiesArray = properties.trim().split(",");
+        for (String property : propertiesArray) {
+            String[] propertyArray = property.trim().split(":");
+            if (propertyArray.length == 2) {
+                propertyMap.put(propertyArray[0], propertyArray[1]);
+            } else {
+                throw new IBMMQSinkAdaptorRuntimeException("Error occurred while creating the property map. " +
+                        "Properties should be provided as key value pairs in '" + siddhiAppContext.getName() +
+                        "' source");
+            }
+        }
+        return propertyMap;
     }
 }

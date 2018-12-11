@@ -38,6 +38,7 @@ import org.wso2.siddhi.core.util.transport.OptionHolder;
 import org.wso2.siddhi.query.api.definition.StreamDefinition;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import javax.jms.BytesMessage;
@@ -87,6 +88,13 @@ import javax.jms.Session;
                         type = DataType.STRING,
                         optional = true,
                         defaultValue = "null"),
+                @Parameter(name = IBMMQConstants.PROPERTIES,
+                        description = "IBM MQ properties can be provided as key value pairs which is separated" +
+                                " by \",\". as an example " +
+                                "properties = 'XMSC_WMQ_CLIENT_RECONNECT_OPTIONS:1600,WMQ_CLIENT_RECONNECT:5005' ",
+                        type = DataType.STRING,
+                        optional = true,
+                        defaultValue = "null")
         },
         examples = {
                 @Example(description = "This example shows how to connect to an IBM MQ queue and send messages.",
@@ -99,8 +107,8 @@ import javax.jms.Session;
                                 + "password='1920',"
                                 + "username='mqm',"
                                 + "@map(type='text'))"
-                                + "define stream SweetProductionStream(name string, amount double);",
-                        description = "This example shows how to connect to an IBM MQ queue and send messages."),
+                                + "define stream SweetProductionStream(name string, amount double);"
+                ),
         }
 )
 
@@ -117,6 +125,7 @@ public class IBMMQSink extends Sink {
     private String userName;
     private String password;
     private String queueName;
+    private String properties;
     private boolean isSecured = false;
     private SiddhiAppContext siddhiAppContext;
 
@@ -136,12 +145,22 @@ public class IBMMQSink extends Sink {
         this.siddhiAppContext = siddhiAppContext;
         this.optionHolder = optionHolder;
         this.connectionFactory = new MQQueueConnectionFactory();
+        this.outputStreamDefinition = outputStreamDefinition;
         this.queueName = optionHolder.validateAndGetStaticValue(IBMMQConstants.DESTINATION_NAME);
         this.userName = optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME,
                 sinkConfigReader.readConfig(IBMMQConstants.USER_NAME, null));
         this.password = optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD,
                 sinkConfigReader.readConfig(IBMMQConstants.PASSWORD, null));
-
+        this.properties = optionHolder.validateAndGetStaticValue(IBMMQConstants.PROPERTIES, sinkConfigReader.readConfig
+                (IBMMQConstants.PROPERTIES, null));
+        if (properties != null) {
+            try {
+                connectionFactory.setBatchProperties(generatePropertyMap(properties));
+            } catch (JMSException e) {
+                throw new IBMMQSinkAdaptorRuntimeException("Error occurred while initializing IBM MQ sink properties " +
+                        "for '" + siddhiAppContext.getName() + "' sink", e);
+            }
+        }
         if (Objects.nonNull(userName) && Objects.nonNull(password)) {
             isSecured = true;
         }
@@ -253,5 +272,21 @@ public class IBMMQSink extends Sink {
     @Override
     public void restoreState(Map<String, Object> state) {
         //not available
+    }
+
+    private Map<String, Object> generatePropertyMap(String properties) {
+        Map<String, Object> propertyMap = new HashMap<>();
+        String[] propertiesArray = properties.split(",");
+        for (String property : propertiesArray) {
+            String[] propertyArray = property.trim().split(":");
+            if (propertyArray.length == 2) {
+                propertyMap.put(propertyArray[0], propertyArray[1]);
+            } else {
+                throw new IBMMQSinkAdaptorRuntimeException("Error occurred while creating the property map. " +
+                        "Properties should be provided as key value pairs for '" + siddhiAppContext.getName() +
+                        "' sink");
+            }
+        }
+        return propertyMap;
     }
 }

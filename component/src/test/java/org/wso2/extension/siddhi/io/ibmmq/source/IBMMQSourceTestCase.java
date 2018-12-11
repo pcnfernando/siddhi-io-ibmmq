@@ -56,7 +56,9 @@ public class IBMMQSourceTestCase {
                 "        channel='Channel1',\n" +
                 "        queue.manager = 'ESBQManager',\n" +
                 "        username = 'mqm',\n" +
-                "        password = '1920',\n" +
+                "        password = '1920'," +
+                "        properties = 'XMSC_WMQ_CLIENT_RECONNECT_OPTIONS:1600,WMQ_CLIENT_RECONNECT:5005',   " +
+                "\n" +
                 "        @map(type='xml'))\n" +
                 "define stream SweetProductionStream(name string);\n";
         String outStream = "define stream outStream(name string); \n";

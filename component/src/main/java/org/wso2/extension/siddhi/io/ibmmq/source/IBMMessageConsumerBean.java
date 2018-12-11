@@ -17,6 +17,8 @@
  */
 package org.wso2.extension.siddhi.io.ibmmq.source;
 
+import java.util.Map;
+
 /**
  * Bean class for IBM message consumer source properties
  */
@@ -27,6 +29,7 @@ public class IBMMessageConsumerBean {
     private String destinationName;
     private boolean isSecured = false;
     private int workerCount;
+    private Map<String, Object> propertyMap;
 
     public String getUserName() {
         return userName;
@@ -74,5 +77,13 @@ public class IBMMessageConsumerBean {
 
     public void setDestinationName(String destinationName) {
         this.destinationName = destinationName;
+    }
+
+    public Map<String, Object> getPropertyMap() {
+        return propertyMap;
+    }
+
+    public void setPropertyMap(Map<String, Object> propertyMap) {
+        this.propertyMap = propertyMap;
     }
 }

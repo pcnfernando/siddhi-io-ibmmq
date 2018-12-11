@@ -57,6 +57,9 @@ public class IBMMessageConsumerThread implements Runnable {
     public IBMMessageConsumerThread(SourceEventListener sourceEventListener,
                                     IBMMessageConsumerBean ibmMessageConsumerBean,
                                     MQQueueConnectionFactory mqQueueConnectionFactory) throws JMSException {
+        if (ibmMessageConsumerBean.getPropertyMap() != null) {
+            mqQueueConnectionFactory.setBatchProperties(ibmMessageConsumerBean.getPropertyMap());
+        }
         if (ibmMessageConsumerBean.isSecured()) {
             connection = (MQConnection) mqQueueConnectionFactory.createConnection(
                     ibmMessageConsumerBean.getUserName(), ibmMessageConsumerBean.getPassword());

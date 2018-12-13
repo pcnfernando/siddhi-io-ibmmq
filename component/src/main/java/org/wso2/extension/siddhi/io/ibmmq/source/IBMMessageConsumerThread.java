@@ -54,8 +54,6 @@ public class IBMMessageConsumerThread implements Runnable {
     private ReentrantLock lock;
     private Condition condition;
     private String queueName;
-    private int maxRetryCount = 10;
-    private long retryInterval = 1000;
     private IBMMessageConsumerBean ibmMessageConsumerBean;
     private MQQueueConnectionFactory mqQueueConnectionFactory;
     private IBMMQConnectionRetryHandler ibmmqConnectionRetryHandler;
@@ -68,7 +66,7 @@ public class IBMMessageConsumerThread implements Runnable {
         this.sourceEventListener = sourceEventListener;
         this.queueName = ibmMessageConsumerBean.getQueueName();
         this.ibmmqConnectionRetryHandler = new IBMMQConnectionRetryHandler(this,
-                retryInterval, maxRetryCount);
+                ibmMessageConsumerBean.getRetryInterval(), ibmMessageConsumerBean.getMaxRetryCount());
         lock = new ReentrantLock();
         condition = lock.newCondition();
         connect();

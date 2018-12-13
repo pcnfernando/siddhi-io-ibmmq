@@ -37,6 +37,8 @@ import org.wso2.siddhi.core.util.config.ConfigReader;
 import org.wso2.siddhi.core.util.transport.OptionHolder;
 
 import java.nio.ByteBuffer;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -85,6 +87,17 @@ import javax.jms.JMSException;
                         type = DataType.INT,
                         optional = true,
                         defaultValue = "1"),
+                @Parameter(name = IBMMQConstants.MAX_RETRIES,
+                        description = "Maximum number of retries to reconnect to the MQ server during "
+                                + "a broken connection before giving up.",
+                        type = DataType.INT,
+                        optional = true,
+                        defaultValue = "5"),
+                @Parameter(name = IBMMQConstants.RETRY_INTERVAL,
+                        description = "Interval between retry attempts in seconds.",
+                        type = DataType.INT,
+                        optional = true,
+                        defaultValue = "2"),
                 @Parameter(name = IBMMQConstants.PROPERTIES,
                         description = "IBM MQ properties which are supported by the client can be provided as " +
                                 "key value pairs which is separated by \",\". as an example " +
@@ -142,6 +155,13 @@ public class IBMMQSource extends Source {
                 IBMMQConstants.WORKER_COUNT, "1")));
         ibmMessageConsumerBean.setDestinationName(optionHolder.validateAndGetOption(IBMMQConstants.DESTINATION_NAME)
                 .getValue());
+        String maxRetries = optionHolder.validateAndGetStaticValue(IBMMQConstants.MAX_RETRIES,
+                        configReader.readConfig(IBMMQConstants.MAX_RETRIES, IBMMQConstants.DEFAULT_MAX_RETRIES));
+        ibmMessageConsumerBean.setMaxRetryCount(Integer.parseInt(maxRetries));
+        String retryInterval = optionHolder.validateAndGetStaticValue(IBMMQConstants.RETRY_INTERVAL,
+                configReader.readConfig(IBMMQConstants.RETRY_INTERVAL, IBMMQConstants.DEFAULT_RETRY_INTERVAL));
+        Long timeInMilliSeconds = Duration.of(Long.parseLong(retryInterval), ChronoUnit.SECONDS).toMillis();
+        ibmMessageConsumerBean.setRetryInterval(timeInMilliSeconds);
         if (Objects.nonNull(ibmMessageConsumerBean.getPassword()) &&
                 Objects.nonNull(ibmMessageConsumerBean.getUserName())) {
             ibmMessageConsumerBean.setSecured(true);

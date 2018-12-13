@@ -30,6 +30,8 @@ public class IBMMessageConsumerBean {
     private boolean isSecured = false;
     private int workerCount;
     private Map<String, Object> propertyMap;
+    private int maxRetryCount = 5;
+    private long retryInterval = 2000;
 
     public String getUserName() {
         return userName;
@@ -85,5 +87,21 @@ public class IBMMessageConsumerBean {
 
     public void setPropertyMap(Map<String, Object> propertyMap) {
         this.propertyMap = propertyMap;
+    }
+
+    public int getMaxRetryCount() {
+        return maxRetryCount;
+    }
+
+    public void setMaxRetryCount(int maxRetryCount) {
+        this.maxRetryCount = maxRetryCount;
+    }
+
+    public long getRetryInterval() {
+        return retryInterval;
+    }
+
+    public void setRetryInterval(long retryInterval) {
+        this.retryInterval = retryInterval;
     }
 }

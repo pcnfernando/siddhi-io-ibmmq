@@ -86,9 +86,10 @@ import javax.jms.JMSException;
                         optional = true,
                         defaultValue = "1"),
                 @Parameter(name = IBMMQConstants.PROPERTIES,
-                        description = "IBM MQ properties can be provided as key value pairs which is separated" +
-                                " by \",\". as an example " +
-                                "properties = 'XMSC_WMQ_CLIENT_RECONNECT_OPTIONS:1600,WMQ_CLIENT_RECONNECT:5005' ",
+                        description = "IBM MQ properties which are supported by the client can be provided as " +
+                                "key value pairs which is separated by \",\". as an example " +
+                                "batch.properties = 'XMSC_WMQ_CLIENT_RECONNECT_OPTIONS:1600," +
+                                "WMQ_CLIENT_RECONNECT:5005' ",
                         type = DataType.STRING,
                         optional = true,
                         defaultValue = "null")
@@ -102,6 +103,7 @@ import javax.jms.JMSException;
                         + "queue.manager = 'ESBQManager',"
                         + "password='1920',"
                         + "username='mqm',"
+                        + "batch.properties = 'XMSC_WMQ_CLIENT_RECONNECT_OPTIONS:1600,WMQ_CLIENT_RECONNECT:5005',"
                         + "@map(type='text'))"
                         + "define stream SweetProductionStream(name string, amount double);",
                         description = "This exampe shows how to connect to an IBM message queue and receive messages."),

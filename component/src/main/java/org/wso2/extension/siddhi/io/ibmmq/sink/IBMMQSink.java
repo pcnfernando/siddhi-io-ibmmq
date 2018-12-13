@@ -89,9 +89,10 @@ import javax.jms.Session;
                         optional = true,
                         defaultValue = "null"),
                 @Parameter(name = IBMMQConstants.PROPERTIES,
-                        description = "IBM MQ properties can be provided as key value pairs which is separated" +
-                                " by \",\". as an example " +
-                                "properties = 'XMSC_WMQ_CLIENT_RECONNECT_OPTIONS:1600,WMQ_CLIENT_RECONNECT:5005' ",
+                        description = "IBM MQ properties which are supported by the client can be provided as key " +
+                                "value pairs which is separated by \",\". as an example " +
+                                "batch.properties = 'XMSC_WMQ_CLIENT_RECONNECT_OPTIONS:1600," +
+                                "WMQ_CLIENT_RECONNECT:5005'.",
                         type = DataType.STRING,
                         optional = true,
                         defaultValue = "null")
@@ -106,6 +107,8 @@ import javax.jms.Session;
                                 + "queue.manager = 'ESBQManager',"
                                 + "password='1920',"
                                 + "username='mqm',"
+                                + "batch.properties = 'XMSC_WMQ_CLIENT_RECONNECT_OPTIONS:1600," +
+                                "WMQ_CLIENT_RECONNECT:5005',"
                                 + "@map(type='text'))"
                                 + "define stream SweetProductionStream(name string, amount double);"
                 ),
@@ -157,8 +160,8 @@ public class IBMMQSink extends Sink {
             try {
                 connectionFactory.setBatchProperties(generatePropertyMap(properties));
             } catch (JMSException e) {
-                throw new IBMMQSinkAdaptorRuntimeException("Error occurred while initializing IBM MQ sink properties " +
-                        "for '" + siddhiAppContext.getName() + "' sink", e);
+                throw new IBMMQSinkAdaptorRuntimeException("Error occurred while initializing IBM MQ with " +
+                        "provided sink batch.properties for '" + siddhiAppContext.getName() + "' sink", e);
             }
         }
         if (Objects.nonNull(userName) && Objects.nonNull(password)) {

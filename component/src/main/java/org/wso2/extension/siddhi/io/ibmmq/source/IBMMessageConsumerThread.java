@@ -53,6 +53,7 @@ public class IBMMessageConsumerThread implements Runnable {
     private volatile boolean inactive;
     private ReentrantLock lock;
     private Condition condition;
+
     private String queueName;
     private IBMMessageConsumerBean ibmMessageConsumerBean;
     private MQQueueConnectionFactory mqQueueConnectionFactory;
@@ -154,10 +155,12 @@ public class IBMMessageConsumerThread implements Runnable {
         ExceptionListener exceptionListener = new ExceptionListener() {
             @Override
             public void onException(JMSException e) {
-                logger.error("Exception was thrown from the IBMMQ connection.", e);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Exception was caught at IBMMQ connection exception listener.", e);
+                }
                 if (!ibmmqConnectionRetryHandler.retry()) {
                     logger.error("Connection to the MQ provider failed after retrying for "
-                            + ibmmqConnectionRetryHandler.getRetryCount() + " times");
+                            + ibmmqConnectionRetryHandler.getRetryCount() + " times.", e);
                 }
             }
         };
@@ -166,5 +169,9 @@ public class IBMMessageConsumerThread implements Runnable {
         Queue queue = session.createQueue(ibmMessageConsumerBean.getDestinationName());
         this.messageConsumer = session.createConsumer(queue);
         this.connection.start();
+    }
+
+    public String getQueueName() {
+        return queueName;
     }
 }

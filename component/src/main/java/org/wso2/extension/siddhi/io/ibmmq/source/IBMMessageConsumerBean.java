@@ -30,7 +30,7 @@ public class IBMMessageConsumerBean {
     private boolean isSecured = false;
     private int workerCount;
     private Map<String, Object> propertyMap;
-    private int maxRetryCount = 5;
+    private int maxRetryCount = 3;
     private long retryInterval = 2000;
 
     public String getUserName() {

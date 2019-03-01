@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/component/siddhi-io-ibmmq.iml" filepath="$PROJECT_DIR$/component/siddhi-io-ibmmq.iml" />
+      <module fileurl="file://$PROJECT_DIR$/siddhi-io-ibmmq-parent.iml" filepath="$PROJECT_DIR$/siddhi-io-ibmmq-parent.iml" />
+    </modules>
+  </component>
+</project>

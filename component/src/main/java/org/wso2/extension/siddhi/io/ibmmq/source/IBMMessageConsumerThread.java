@@ -22,7 +22,6 @@ import com.ibm.mq.jms.MQConnection;
 import com.ibm.mq.jms.MQQueueConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.extension.siddhi.io.ibmmq.source.exception.IBMMQSourceAdaptorRuntimeException;
 import org.wso2.siddhi.core.stream.input.source.SourceEventListener;
 
 import java.nio.ByteBuffer;
@@ -45,6 +44,7 @@ import javax.jms.TextMessage;
  * IBM MQ message consumer class which retrieve messages from the queue.
  **/
 public class IBMMessageConsumerThread implements Runnable {
+
     private static final Logger logger = LoggerFactory.getLogger(IBMMessageConsumerThread.class);
     private SourceEventListener sourceEventListener;
     private MQConnection connection;
@@ -62,6 +62,7 @@ public class IBMMessageConsumerThread implements Runnable {
     public IBMMessageConsumerThread(SourceEventListener sourceEventListener,
                                     IBMMessageConsumerBean ibmMessageConsumerBean,
                                     MQQueueConnectionFactory mqQueueConnectionFactory) throws JMSException {
+
         this.ibmMessageConsumerBean = ibmMessageConsumerBean;
         this.mqQueueConnectionFactory = mqQueueConnectionFactory;
         this.sourceEventListener = sourceEventListener;
@@ -75,6 +76,7 @@ public class IBMMessageConsumerThread implements Runnable {
 
     @Override
     public void run() {
+
         while (!inactive) {
             try {
                 if (paused) {
@@ -103,11 +105,9 @@ public class IBMMessageConsumerThread implements Runnable {
                 } else if (message instanceof ByteBuffer) {
                     sourceEventListener.onEvent(message, null);
                 }
-            } catch (JMSException e) {
-                throw new IBMMQSourceAdaptorRuntimeException("Exception occurred during consuming messages " +
-                        "from the queue: " + e.getMessage(), e);
             } catch (Throwable t) {
-                logger.error("Exception occurred during consuming messages: " + t.getMessage(), t);
+                logger.error("Exception occurred during consuming messages at queue '"
+                        + queueName + "' " + t.getMessage(), t);
             }
         }
     }
@@ -133,15 +133,19 @@ public class IBMMessageConsumerThread implements Runnable {
                 messageConsumer.close();
             }
         } catch (JMSException e) {
-            logger.error("Error occurred while closing the consumer for the queue: " + queueName + ". ", e);
-
+            if (logger.isDebugEnabled()) {
+                logger.debug("Error occurred while closing the consumer for the queue: " + queueName + ". ", e);
+            }
         }
         try {
             if (Objects.nonNull(connection)) {
                 connection.close();
             }
         } catch (JMSException e) {
-            logger.error("Error occurred while closing the IBM MQ connection for the queue: " + queueName + ". ", e);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Error occurred while closing the IBM MQ connection for the queue: "
+                        + queueName + ". ", e);
+            }
         }
     }
 
@@ -155,6 +159,7 @@ public class IBMMessageConsumerThread implements Runnable {
         ExceptionListener exceptionListener = new ExceptionListener() {
             @Override
             public void onException(JMSException e) {
+                logger.error("Connection failure at queue:" + queueName);
                 if (logger.isDebugEnabled()) {
                     logger.debug("Exception was caught at IBMMQ connection exception listener.", e);
                 }

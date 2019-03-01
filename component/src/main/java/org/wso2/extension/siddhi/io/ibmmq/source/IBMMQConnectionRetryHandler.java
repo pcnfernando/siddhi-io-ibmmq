@@ -93,7 +93,6 @@ class IBMMQConnectionRetryHandler {
         while (retryCount < maxRetryCount) {
             try {
                 retryCount++;
-                messageConsumer.shutdownConsumer();
                 messageConsumer.connect();
                 logger.info("Connected to the message broker to " + messageConsumer.getQueueName()
                         + "after retrying for " + retryCount + " time(s)");

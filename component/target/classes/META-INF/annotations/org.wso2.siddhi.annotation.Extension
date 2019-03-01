@@ -1,0 +1,2 @@
+org.wso2.extension.siddhi.io.ibmmq.sink.IBMMQSink
+org.wso2.extension.siddhi.io.ibmmq.source.IBMMQSource

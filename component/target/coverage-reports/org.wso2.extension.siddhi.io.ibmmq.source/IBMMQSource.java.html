@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>IBMMQSource.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Siddhi Extension - IBMMQ Transport</a> &gt; <a href="index.source.html" class="el_package">org.wso2.extension.siddhi.io.ibmmq.source</a> &gt; <span class="el_source">IBMMQSource.java</span></div><h1>IBMMQSource.java</h1><pre class="source lang-java linenums">/*
+ *  Copyright (c) 2018 WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the &quot;License&quot;); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied.  See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ *
+ */
+package org.wso2.extension.siddhi.io.ibmmq.source;
+
+import com.ibm.mq.jms.MQQueueConnectionFactory;
+import com.ibm.msg.client.wmq.WMQConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.wso2.extension.siddhi.io.ibmmq.sink.exception.IBMMQSinkAdaptorRuntimeException;
+import org.wso2.extension.siddhi.io.ibmmq.source.exception.IBMMQSourceAdaptorRuntimeException;
+import org.wso2.extension.siddhi.io.ibmmq.util.IBMMQConstants;
+import org.wso2.siddhi.annotation.Example;
+import org.wso2.siddhi.annotation.Extension;
+import org.wso2.siddhi.annotation.Parameter;
+import org.wso2.siddhi.annotation.util.DataType;
+import org.wso2.siddhi.core.config.SiddhiAppContext;
+import org.wso2.siddhi.core.exception.ConnectionUnavailableException;
+import org.wso2.siddhi.core.stream.input.source.Source;
+import org.wso2.siddhi.core.stream.input.source.SourceEventListener;
+import org.wso2.siddhi.core.util.config.ConfigReader;
+import org.wso2.siddhi.core.util.transport.OptionHolder;
+
+import java.nio.ByteBuffer;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ScheduledExecutorService;
+import javax.jms.JMSException;
+
+/**
+ * IBM MQ Source implementation.
+ */
+@Extension(
+        name = &quot;ibmmq&quot;,
+        namespace = &quot;source&quot;,
+        description = &quot;IBM MQ source allows you to subscribe to an IBM message queue and receive messages. It has the &quot;
+                + &quot;ability to receive messages of the 'map' and 'text' message formats.&quot;,
+        parameters = {
+                @Parameter(name = IBMMQConstants.DESTINATION_NAME,
+                        description = &quot;The name of the queue name to which the IBM MQ source should subscribe.&quot;,
+                        type = DataType.STRING),
+                @Parameter(name = IBMMQConstants.HOST,
+                        description = &quot;The host address of the IBM MQ server.&quot;,
+                        type = DataType.STRING),
+                @Parameter(name = IBMMQConstants.PORT,
+                        description = &quot;The port of the IBM MQ server.&quot;,
+                        type = DataType.STRING),
+                @Parameter(name = IBMMQConstants.CHANNEL,
+                        description = &quot;The channel used to connect to the MQ server.&quot;,
+                        type = DataType.STRING),
+                @Parameter(name = IBMMQConstants.QUEUE_MANAGER_NAME,
+                        description = &quot;The name of the queue manager.&quot;,
+                        type = DataType.STRING),
+                @Parameter(name = IBMMQConstants.USER_NAME,
+                        description = &quot;The username to connect to the server. If this is not provided, the &quot; +
+                                &quot;connection is attempted without both the username and the password.&quot;,
+                        type = DataType.STRING,
+                        optional = true,
+                        defaultValue = &quot;null&quot;),
+                @Parameter(name = IBMMQConstants.PASSWORD,
+                        description = &quot;The password to connect to the server. If this is not provided, the &quot; +
+                                &quot;connection is attempted without both the username and the password.&quot;,
+                        type = DataType.STRING,
+                        optional = true,
+                        defaultValue = &quot;null&quot;),
+                @Parameter(name = IBMMQConstants.WORKER_COUNT,
+                        description = &quot;Number of worker threads listening on the given queue. When the multiple &quot; +
+                                &quot;workers are enabled event ordering is not preserved.&quot;,
+                        type = DataType.INT,
+                        optional = true,
+                        defaultValue = &quot;1&quot;),
+                @Parameter(name = IBMMQConstants.MAX_RETRIES,
+                        description = &quot;Maximum number of retries to reconnect to the MQ server during &quot;
+                                + &quot;a broken connection before giving up.&quot;,
+                        type = DataType.INT,
+                        optional = true,
+                        defaultValue = &quot;5&quot;),
+                @Parameter(name = IBMMQConstants.RETRY_INTERVAL,
+                        description = &quot;Interval between retry attempts in seconds.&quot;,
+                        type = DataType.INT,
+                        optional = true,
+                        defaultValue = &quot;2&quot;),
+                @Parameter(name = IBMMQConstants.PROPERTIES,
+                        description = &quot;IBM MQ properties which are supported by the client can be provided as &quot; +
+                                &quot;key value pairs which is separated by \&quot;,\&quot;. as an example &quot; +
+                                &quot;batch.properties = 'XMSC_WMQ_CLIENT_RECONNECT_OPTIONS:1600,&quot; +
+                                &quot;WMQ_CLIENT_RECONNECT:5005' &quot;,
+                        type = DataType.STRING,
+                        optional = true,
+                        defaultValue = &quot;null&quot;)
+        },
+        examples = {
+                @Example(syntax = &quot;@source(type='ibmmq',&quot;
+                        + &quot;destination.name='Queue1',&quot;
+                        + &quot;host='192.168.56.3',&quot;
+                        + &quot;port='1414',&quot;
+                        + &quot;channel='Channel1',&quot;
+                        + &quot;queue.manager = 'ESBQManager',&quot;
+                        + &quot;password='1920',&quot;
+                        + &quot;username='mqm',&quot;
+                        + &quot;batch.properties = 'XMSC_WMQ_CLIENT_RECONNECT_OPTIONS:1600,WMQ_CLIENT_RECONNECT:5005',&quot;
+                        + &quot;@map(type='text'))&quot;
+                        + &quot;define stream SweetProductionStream(name string, amount double);&quot;,
+                        description = &quot;This exampe shows how to connect to an IBM message queue and receive messages.&quot;),
+        }
+)
+
+<span class="nc" id="L126">public class IBMMQSource extends Source {</span>
+<span class="nc" id="L127">    private static final Logger logger = LoggerFactory.getLogger(IBMMQSource.class);</span>
+    private SourceEventListener sourceEventListener;
+    private MQQueueConnectionFactory connectionFactory;
+    private IBMMessageConsumerGroup ibmMessageConsumerGroup;
+    private ScheduledExecutorService scheduledExecutorService;
+<span class="nc" id="L132">    private IBMMessageConsumerBean ibmMessageConsumerBean = new IBMMessageConsumerBean();</span>
+    private SiddhiAppContext siddhiAppContext;
+    private String properties;
+
+    @Override
+    public void init(SourceEventListener sourceEventListener, OptionHolder optionHolder,
+                     String[] requestedTransportPropertyNames, ConfigReader configReader,
+                     SiddhiAppContext siddhiAppContext) {
+<span class="nc" id="L140">        this.sourceEventListener = sourceEventListener;</span>
+<span class="nc" id="L141">        this.siddhiAppContext = siddhiAppContext;</span>
+<span class="nc" id="L142">        this.properties = optionHolder.validateAndGetStaticValue(IBMMQConstants.PROPERTIES, configReader.readConfig</span>
+<span class="nc" id="L143">                (IBMMQConstants.PROPERTIES, null));</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">        if (properties != null) {</span>
+<span class="nc" id="L145">            ibmMessageConsumerBean.setPropertyMap(generatePropertyMap(properties));</span>
+        }
+<span class="nc" id="L147">        this.connectionFactory = new MQQueueConnectionFactory();</span>
+<span class="nc" id="L148">        ibmMessageConsumerBean.setQueueName(optionHolder.validateAndGetStaticValue(IBMMQConstants.DESTINATION_NAME,</span>
+<span class="nc" id="L149">                configReader.readConfig(IBMMQConstants.DESTINATION_NAME, null)));</span>
+<span class="nc" id="L150">        ibmMessageConsumerBean.setUserName(optionHolder.validateAndGetStaticValue(IBMMQConstants.USER_NAME,</span>
+<span class="nc" id="L151">                configReader.readConfig(IBMMQConstants.USER_NAME, null)));</span>
+<span class="nc" id="L152">        ibmMessageConsumerBean.setPassword(optionHolder.validateAndGetStaticValue(IBMMQConstants.PASSWORD,</span>
+<span class="nc" id="L153">                configReader.readConfig(IBMMQConstants.PASSWORD, null)));</span>
+<span class="nc" id="L154">        ibmMessageConsumerBean.setWorkerCount(Integer.parseInt(optionHolder.validateAndGetStaticValue(</span>
+                IBMMQConstants.WORKER_COUNT, &quot;1&quot;)));
+<span class="nc" id="L156">        ibmMessageConsumerBean.setDestinationName(optionHolder.validateAndGetOption(IBMMQConstants.DESTINATION_NAME)</span>
+<span class="nc" id="L157">                .getValue());</span>
+<span class="nc" id="L158">        String maxRetries = optionHolder.validateAndGetStaticValue(IBMMQConstants.MAX_RETRIES,</span>
+<span class="nc" id="L159">                        configReader.readConfig(IBMMQConstants.MAX_RETRIES, IBMMQConstants.DEFAULT_MAX_RETRIES));</span>
+<span class="nc" id="L160">        ibmMessageConsumerBean.setMaxRetryCount(Integer.parseInt(maxRetries));</span>
+<span class="nc" id="L161">        String retryInterval = optionHolder.validateAndGetStaticValue(IBMMQConstants.RETRY_INTERVAL,</span>
+<span class="nc" id="L162">                configReader.readConfig(IBMMQConstants.RETRY_INTERVAL, IBMMQConstants.DEFAULT_RETRY_INTERVAL));</span>
+<span class="nc" id="L163">        Long timeInMilliSeconds = Duration.of(Long.parseLong(retryInterval), ChronoUnit.SECONDS).toMillis();</span>
+<span class="nc" id="L164">        ibmMessageConsumerBean.setRetryInterval(timeInMilliSeconds);</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">        if (Objects.nonNull(ibmMessageConsumerBean.getPassword()) &amp;&amp;</span>
+<span class="nc bnc" id="L166" title="All 2 branches missed.">                Objects.nonNull(ibmMessageConsumerBean.getUserName())) {</span>
+<span class="nc" id="L167">            ibmMessageConsumerBean.setSecured(true);</span>
+        }
+        try {
+<span class="nc" id="L170">            connectionFactory.setChannel(optionHolder.validateAndGetOption(IBMMQConstants.CHANNEL).getValue());</span>
+<span class="nc" id="L171">            connectionFactory.setHostName(optionHolder.validateAndGetOption(IBMMQConstants.HOST).getValue());</span>
+<span class="nc" id="L172">            connectionFactory.setPort(Integer.parseInt(optionHolder.</span>
+<span class="nc" id="L173">                    validateAndGetOption(IBMMQConstants.PORT).getValue()));</span>
+<span class="nc" id="L174">            connectionFactory.setQueueManager(optionHolder.validateAndGetOption(IBMMQConstants.QUEUE_MANAGER_NAME)</span>
+<span class="nc" id="L175">                    .getValue());</span>
+<span class="nc" id="L176">            connectionFactory.setTransportType(WMQConstants.WMQ_CM_CLIENT);</span>
+<span class="nc" id="L177">            scheduledExecutorService = siddhiAppContext.getScheduledExecutorService();</span>
+<span class="nc" id="L178">        } catch (JMSException e) {</span>
+<span class="nc" id="L179">            throw new IBMMQSourceAdaptorRuntimeException(&quot;Error while initializing IBM MQ source: &quot; + optionHolder.</span>
+<span class="nc" id="L180">                    validateAndGetOption(IBMMQConstants.DESTINATION_NAME).getValue() + &quot;, &quot; + e.getMessage(), e);</span>
+<span class="nc" id="L181">        }</span>
+
+<span class="nc" id="L183">    }</span>
+
+    @Override
+    public void connect(ConnectionCallback connectionCallback) throws ConnectionUnavailableException {
+        //ConnectionCallback is not used as re-connection is handled by IBM MQ client.
+<span class="nc" id="L188">        ibmMessageConsumerGroup = new IBMMessageConsumerGroup(scheduledExecutorService,</span>
+                connectionFactory, ibmMessageConsumerBean);
+<span class="nc" id="L190">        ibmMessageConsumerGroup.run(sourceEventListener);</span>
+<span class="nc" id="L191">    }</span>
+
+    @Override
+    public Class[] getOutputEventClasses() {
+<span class="nc" id="L195">        return new Class[]{String.class, Map.class, ByteBuffer.class};</span>
+    }
+
+    @Override
+    public void disconnect() {
+<span class="nc bnc" id="L200" title="All 2 branches missed.">        if (ibmMessageConsumerGroup != null) {</span>
+<span class="nc" id="L201">            ibmMessageConsumerGroup.shutdown();</span>
+<span class="nc" id="L202">            logger.info(&quot;IBM MQ source disconnected for queue '&quot; + ibmMessageConsumerBean.getQueueName() + &quot;'&quot;);</span>
+        }
+<span class="nc" id="L204">    }</span>
+
+    @Override
+    public void destroy() {
+<span class="nc" id="L208">        ibmMessageConsumerGroup = null;</span>
+<span class="nc" id="L209">        scheduledExecutorService.shutdown();</span>
+<span class="nc" id="L210">    }</span>
+
+    @Override
+    public void pause() {
+<span class="nc bnc" id="L214" title="All 2 branches missed.">        if (ibmMessageConsumerGroup != null) {</span>
+<span class="nc" id="L215">            ibmMessageConsumerGroup.pause();</span>
+<span class="nc" id="L216">            logger.info(&quot;IBM MQ source paused for queue '&quot; + ibmMessageConsumerBean.getQueueName() + &quot;'&quot;);</span>
+        }
+<span class="nc" id="L218">    }</span>
+
+    @Override
+    public void resume() {
+<span class="nc bnc" id="L222" title="All 2 branches missed.">        if (ibmMessageConsumerGroup != null) {</span>
+<span class="nc" id="L223">            ibmMessageConsumerGroup.resume();</span>
+<span class="nc bnc" id="L224" title="All 2 branches missed.">            if (logger.isDebugEnabled()) {</span>
+<span class="nc" id="L225">                logger.debug(&quot;IBM MQ source resumed for queue '&quot; + ibmMessageConsumerBean.getQueueName() + &quot;'&quot;);</span>
+            }
+        }
+<span class="nc" id="L228">    }</span>
+
+    @Override
+    public Map&lt;String, Object&gt; currentState() {
+<span class="nc" id="L232">        return null;</span>
+    }
+
+    @Override
+    public void restoreState(Map&lt;String, Object&gt; state) {
+        // no state to restore
+<span class="nc" id="L238">    }</span>
+
+    private Map&lt;String, Object&gt; generatePropertyMap(String properties) {
+<span class="nc" id="L241">        Map&lt;String, Object&gt; propertyMap = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L242">        String[] propertiesArray = properties.trim().split(&quot;,&quot;);</span>
+<span class="nc bnc" id="L243" title="All 2 branches missed.">        for (String property : propertiesArray) {</span>
+<span class="nc" id="L244">            String[] propertyArray = property.trim().split(&quot;:&quot;);</span>
+<span class="nc bnc" id="L245" title="All 2 branches missed.">            if (propertyArray.length == 2) {</span>
+<span class="nc" id="L246">                propertyMap.put(propertyArray[0], propertyArray[1]);</span>
+            } else {
+<span class="nc" id="L248">                throw new IBMMQSinkAdaptorRuntimeException(&quot;Error occurred while creating the property map. &quot; +</span>
+<span class="nc" id="L249">                        &quot;Properties should be provided as key value pairs in '&quot; + siddhiAppContext.getName() +</span>
+                        &quot;' source&quot;);
+            }
+        }
+<span class="nc" id="L253">        return propertyMap;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.7.8.201612092310</span></div></body></html>

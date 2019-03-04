@@ -1,9 +1,0 @@
-/home/chiran/Desktop/WSO2/siddhi-extensions/siddhi-io-ibmmq/component/src/main/java/org/wso2/extension/siddhi/io/ibmmq/sink/IBMMQSink.java
-/home/chiran/Desktop/WSO2/siddhi-extensions/siddhi-io-ibmmq/component/src/main/java/org/wso2/extension/siddhi/io/ibmmq/source/IBMMessageConsumerBean.java
-/home/chiran/Desktop/WSO2/siddhi-extensions/siddhi-io-ibmmq/component/src/main/java/org/wso2/extension/siddhi/io/ibmmq/source/IBMMQConnectionRetryHandler.java
-/home/chiran/Desktop/WSO2/siddhi-extensions/siddhi-io-ibmmq/component/src/main/java/org/wso2/extension/siddhi/io/ibmmq/source/IBMMessageConsumerThread.java
-/home/chiran/Desktop/WSO2/siddhi-extensions/siddhi-io-ibmmq/component/src/main/java/org/wso2/extension/siddhi/io/ibmmq/util/IBMMQConstants.java
-/home/chiran/Desktop/WSO2/siddhi-extensions/siddhi-io-ibmmq/component/src/main/java/org/wso2/extension/siddhi/io/ibmmq/source/exception/IBMMQSourceAdaptorRuntimeException.java
-/home/chiran/Desktop/WSO2/siddhi-extensions/siddhi-io-ibmmq/component/src/main/java/org/wso2/extension/siddhi/io/ibmmq/source/IBMMQSource.java
-/home/chiran/Desktop/WSO2/siddhi-extensions/siddhi-io-ibmmq/component/src/main/java/org/wso2/extension/siddhi/io/ibmmq/sink/exception/IBMMQSinkAdaptorRuntimeException.java
-/home/chiran/Desktop/WSO2/siddhi-extensions/siddhi-io-ibmmq/component/src/main/java/org/wso2/extension/siddhi/io/ibmmq/source/IBMMessageConsumerGroup.java
